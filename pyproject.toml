@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "drf-audit-trail"
+version = "0.1.1"
+description = "A reusable django [DRF] application that handles auditing of requests and logins"
+authors = ["Talismar Fernandes Costa <talismar788.una@gmail.com>"]
+readme = "README.md"
+
+
+[tool.poetry.dependencies]
+python = "^3.10"
+django = "^4"
+djangorestframework-simplejwt = "5.2.2"
+djangorestframework = "3.14.0"
+
+
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.24.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
