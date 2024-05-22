@@ -1,9 +1,12 @@
 # DRF Audit Trail
 
+A reusable django [DRF] application that handles auditing of requests and logins
+
 ## Features
 
 - Request audit trail
 - Logins audit trail
+- Integration simplejwt
 
 ## Usage
 
@@ -35,10 +38,11 @@ MIDDLEWARE = [
 ```
 
 ## Flow
-
+![DER](docs/flow.png)
 
 ## DER
-
+![DER](docs/DER.png)
 
 ## RequestLoginAuditEventMiddleware class diagram
+![DER](docs/middleware_class_diagram.png)
 
