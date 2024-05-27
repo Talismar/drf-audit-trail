@@ -38,11 +38,11 @@ MIDDLEWARE = [
 ```
 
 ## Flow
-![DER](docs/flow.png)
+![DER](https://github.com/Talismar/drf-audit-trail/blob/develop/docs/flow.png?raw=True)
 
 ## DER
-![DER](docs/DER.png)
+![DER](https://github.com/Talismar/drf-audit-trail/blob/develop/docs/DER.png?raw=True)
 
 ## RequestLoginAuditEventMiddleware class diagram
-![DER](docs/middleware_class_diagram.png)
+![DER](https://github.com/Talismar/drf-audit-trail/blob/develop/docs/middleware_class_diagram.png?raw=True)
 
