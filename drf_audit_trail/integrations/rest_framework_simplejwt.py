@@ -3,14 +3,15 @@ from rest_framework.status import HTTP_200_OK
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from drf_audit_trail.middleware.request_login_audit_event import _thread_locals
 from drf_audit_trail.models import LoginAuditEvent
 
 
 class DRFAuditTrailIntegrationMixin:
     def post(self, request, *args: tuple, **kwargs: dict):
         serializer = self.get_serializer(data=request.data)
-        drf_login_audit_event = request.META.get("drf_login_audit_event")
-        drf_request_audit_event = request.META.get("drf_request_audit_event")
+        drf_login_audit_event = _thread_locals.META.get("drf_login_audit_event")
+        drf_request_audit_event = _thread_locals.META.get("drf_request_audit_event")
 
         try:
             serializer.is_valid(raise_exception=True)

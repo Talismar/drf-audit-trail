@@ -15,7 +15,7 @@ def get_ip_addresses(request):
 
 
 def get_response_size(response):
-    content = getattr(response, "content")
+    content = getattr(response, "content", None)
     if content is not None and type(content) == bytes:
         return len(response.content)
 
