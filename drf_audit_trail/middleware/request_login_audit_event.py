@@ -4,9 +4,11 @@ from json import dumps as json_dumps
 from time import time
 from traceback import format_exc as traceback_format_exc
 
+from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.http import HttpRequest
 from django.utils.deprecation import MiddlewareMixin
+from rest_framework_simplejwt.tokens import AccessToken, TokenError
 
 from drf_audit_trail.models import LoginAuditEvent, RequestAuditEvent
 from drf_audit_trail.settings import (
@@ -19,6 +21,8 @@ from drf_audit_trail.utils import (
     get_ip_addresses,
     get_response_size,
 )
+
+User = get_user_model()
 
 _thread_locals = threading.local()
 
@@ -36,6 +40,8 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
             _thread_locals.META = request.META
             _thread_locals.query_params = _thread_locals.META.get("QUERY_STRING")
             _thread_locals.ip_addresses = get_ip_addresses(request)
+            _thread_locals.META["drf_request_audit_event"] = {}
+            _thread_locals.META["drf_login_audit_event"] = {}
 
             _thread_locals.request_audit_event_enabled = False
             for i in DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS:
@@ -50,11 +56,6 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
             _thread_locals.META["drf_audit_event_start_time"] = (
                 _thread_locals.start_time
             )
-
-    def process_view(self, request: HttpRequest, view_func, view_args, view_kwargs):
-        if getattr(_thread_locals, "request_audit_event_enabled", False):
-            _thread_locals.META["drf_request_audit_event"] = {}
-            _thread_locals.META["drf_login_audit_event"] = {}
 
     def process_response(self, request, response):
         if getattr(_thread_locals, "request_audit_event_enabled", False):
@@ -145,10 +146,44 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
         _thread_locals.META = dict()
 
     def __is_auth_url(self, request):
-        return DRF_AUDIT_TRAIL_AUTH_URL == _thread_locals.META.get("PATH_INFO")
+        # Integration to admin login | new feature
+        if getattr(_thread_locals, "method") == "POST":
+
+            def _validate(auth_url):
+                return auth_url == _thread_locals.META.get("PATH_INFO")
+
+            if isinstance(DRF_AUDIT_TRAIL_AUTH_URL, list):
+                return any(_validate(auth_url) for auth_url in DRF_AUDIT_TRAIL_AUTH_URL)
+
+            return _validate(DRF_AUDIT_TRAIL_AUTH_URL)
+        return False
 
     def __get_authenticated_user(self, request):
         if self.__is_auth_url(request):
             return _thread_locals.META["drf_request_audit_event"].get("user")
 
-        return get_authenticated_user_by_request(request)
+        # return (
+        #         _thread_locals.META["drf_request_audit_event"].get("user") or None
+        #         if request.user.is_anonymous
+        #         else request.user
+        #     )
+
+        return get_authenticated_user_by_request(
+            request
+        ) or self.__get_user_by_raw_authorization_header(request)
+
+    def __get_user_by_raw_authorization_header(self, request):
+        authorization_header = request.headers.get("Authorization")
+
+        if isinstance(authorization_header, str) and "Bearer " in authorization_header:
+            raw_access_token_split = authorization_header.split("Bearer ")
+
+            if len(raw_access_token_split) == 2:
+                raw_access_token = raw_access_token_split[1]
+
+                try:
+                    access_token = AccessToken(raw_access_token)
+                    user_id = access_token.get("user_id")
+                    return User.objects.get(pk=user_id)
+                except (TokenError, User.DoesNotExist):
+                    pass

@@ -81,17 +81,8 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
-    },
-    "drf_audit_trail": {
-        "NAME": BASE_DIR / "audit_trail_database.sqlite3",
-        "ENGINE": "django.db.backends.sqlite3",
-    },
+    }
 }
-
-DRF_AUDIT_TRAIL_DB_ALIAS = "drf_audit_trail"
-
-# DATABASE_ROUTES = ["drf_audit_trail.database_router.DRFAuditTrailDatabaseRouter"]
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators

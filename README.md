@@ -1,33 +1,42 @@
 # DRF Audit Trail
 
-A reusable django [DRF] application that handles auditing of requests and logins
+A reusable Django [DRF] application that handles auditing of requests and logins.
 
 ## Features
 
 - Request audit trail
 - Logins audit trail
-- Integration simplejwt
+- Integration with simplejwt
+- Support for Django Async
+- Thread Safe
+- Error tracking
 
 ## Usage
 
-Para usar este app, você precisa efetuar a instação do mesmo e logo apos adicionar-lo ao INSTALLED_APPS do Django e configurar o middlewares no array de middlewares do seu django settings
+To use this app, you need to install it, add it to the Django INSTALLED_APPS, and configure the middleware in your Django settings.
 
-#### Installation
+### Installation
 ```sh
 pip install drf-audit-trail
 ```
 
-#### Add to Django INSTALLED_APPS configuration
+### Configuration
+
+Add to Django INSTALLED_APPS
+
 ```python
 # settings.py
 
 INSTALLED_APPS = [
     ...
-    "drf_audit_trail"
+    "drf_audit_trail",
 ]
 ```
 
-#### Add to Django MIDDLEWARE configuration
+#### Configure the middleware
+
+Add to Django MIDDLEWARE configuration
+
 ```python
 # settings.py
 
@@ -35,6 +44,43 @@ MIDDLEWARE = [
     ...
     "drf_audit_trail.middleware.RequestLoginAuditEventMiddleware",
 ]
+```
+
+## Settings
+
+In your settings.py, configure
+
+**DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS**:
+A list that accepts regex patterns indicating which URLs should be tracked.
+
+Example:
+
+Default: [r"^/api/.*?/"]
+
+```python
+DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS = [r"^/api/.*?/"]
+```
+
+This means that all requests starting with /api/ will be tracked.
+
+---
+
+**DRF_AUDIT_TRAIL_AUTH_URL**: The endpoint used to authenticate users.
+
+Default: /api/token/
+
+```python
+DRF_AUDIT_TRAIL_AUTH_URL = "/api/token/"
+```
+
+---
+
+**DRF_AUDIT_TRAIL_AUTH_STATUS_CODE_FAILED**: The status code returned when the auth request failed
+
+Default: 401
+
+```python
+DRF_AUDIT_TRAIL_AUTH_STATUS_CODE_FAILED = 401
 ```
 
 ## Flow
