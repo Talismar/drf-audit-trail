@@ -60,9 +60,10 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         if getattr(_thread_locals, "request_audit_event_enabled", False):
             authenticated_user = self.__get_authenticated_user(request)
-            extra_informations = self._get_extra_informations(
-                _thread_locals.META["drf_request_audit_event"]
+            drf_request_audit_event = _thread_locals.META.get(
+                "drf_request_audit_event", {}
             )
+            extra_informations = self._get_extra_informations(drf_request_audit_event)
 
             with transaction.atomic():
                 request_audit_event_instance = RequestAuditEvent.objects.create(
@@ -75,21 +76,15 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
                     response_time=time() - _thread_locals.start_time,
                     response_size=get_response_size(response),
                     status_code=getattr(response, "status_code", None),
-                    error_type=_thread_locals.META["drf_request_audit_event"].get(
-                        "error_type"
-                    ),
-                    error_message=_thread_locals.META["drf_request_audit_event"].get(
-                        "error_message"
-                    ),
-                    error_stacktrace=_thread_locals.META["drf_request_audit_event"].get(
-                        "error_stacktrace"
-                    ),
+                    error_type=drf_request_audit_event.get("error_type"),
+                    error_message=drf_request_audit_event.get("error_message"),
+                    error_stacktrace=drf_request_audit_event.get("error_stacktrace"),
                     extra_informations=extra_informations,
                 )
 
                 if self.__is_auth_url(request):
                     extra_informations = self._get_extra_informations(
-                        _thread_locals.META["drf_login_audit_event"]
+                        drf_request_audit_event
                     )
                     LoginAuditEvent.objects.create(
                         extra_informations=extra_informations,
@@ -111,17 +106,20 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
                 "status"
             ] = LoginAuditEvent.FAILED
 
-    def _get_extra_informations(self, instance_dict: dict):
-        request_extra_informations = instance_dict.get("extra_informations")
-        extra_informations = None
+    def _get_extra_informations(self, drf_request_audit_event: dict | None):
+        if drf_request_audit_event is not None:
+            request_extra_informations = drf_request_audit_event.get(
+                "extra_informations"
+            )
+            extra_informations = None
 
-        if request_extra_informations is not None:
-            try:
-                extra_informations = json_dumps(request_extra_informations)
-            except Exception:
-                pass
+            if request_extra_informations is not None:
+                try:
+                    extra_informations = json_dumps(request_extra_informations)
+                except Exception:
+                    pass
 
-        return extra_informations
+            return extra_informations
 
     def _get_login_status(self, request, response):
         if response.status_code == DRF_AUDIT_TRAIL_AUTH_STATUS_CODE_FALIED:
@@ -160,13 +158,9 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
 
     def __get_authenticated_user(self, request):
         if self.__is_auth_url(request):
-            return _thread_locals.META["drf_request_audit_event"].get("user")
-
-        # return (
-        #         _thread_locals.META["drf_request_audit_event"].get("user") or None
-        #         if request.user.is_anonymous
-        #         else request.user
-        #     )
+            user = _thread_locals.META["drf_request_audit_event"].get("user")
+            if user is not None:
+                return user
 
         return get_authenticated_user_by_request(
             request

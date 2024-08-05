@@ -151,3 +151,7 @@ SIMPLE_JWT = {
     # It will work instead of the default serializer(TokenObtainPairSerializer).
     # "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.CustomObtainPairSerializer",
 }
+
+
+DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS = [r"^(?!/admin/jsi18n/).*$"]
+DRF_AUDIT_TRAIL_AUTH_URL = ["/api/token/", "/admin/login/"]
