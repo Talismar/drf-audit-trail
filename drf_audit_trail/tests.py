@@ -5,6 +5,8 @@ from drf_audit_trail.models import LoginAuditEvent, RequestAuditEvent
 
 
 class MiddlewareTestCase(TestCase):
+    databases = {"default", "audit_trail"}
+
     def _get_client_with_login(self):
         user_data = {"username": "talismar", "password": "admin"}
         User.objects.create_user(**user_data)
@@ -68,5 +70,5 @@ class MiddlewareTestCase(TestCase):
         ).first()
 
         self.assertIsNotNone(request_audit_event.user)
-        self.assertEqual(request_audit_event.user.username, "talismar")
+        self.assertEqual(request_audit_event.user, "1")
         self.assertEqual(response.status_code, request_audit_event.status_code)

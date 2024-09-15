@@ -1,0 +1,31 @@
+services:
+  web:
+    build: .
+    entrypoint: ["compose/django/start.sh"]
+    command: ["uvicorn", "config.asgi:application", "--reload", "--host", "0.0.0.0", "--port", "8000"]
+    volumes:
+      - media_data:/usr/src/app/mediafiles
+      - static_data:/usr/src/app/staticfiles
+      - .:/usr/src/app
+    environment:
+      - DJANGO_SUPERUSER_USERNAME=talismar
+      - DJANGO_SUPERUSER_PASSWORD=admin
+      - DJANGO_SUPERUSER_EMAIL=talismar788.una@gmail.com
+    ports:
+      - 8000:8000
+    
+  nginx:
+    build:
+      context: .
+      dockerfile: ./compose/nginx/Dockerfile
+    volumes:
+      - media_data:/usr/src/app/mediafiles
+      - static_data:/usr/src/app/staticfiles
+    ports:
+      - 80:80
+    depends_on:
+      - web
+
+volumes:
+  media_data:
+  static_data:

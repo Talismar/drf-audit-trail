@@ -1,11 +1,8 @@
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from drf_audit_trail.managers import RequestAuditEventManager
 from drf_audit_trail.mixins import BaseModelMixin
-
-User = get_user_model()
 
 
 class RequestAuditEvent(BaseModelMixin):
@@ -13,9 +10,8 @@ class RequestAuditEvent(BaseModelMixin):
     This is the model for the request audit trail.
     """
 
-    user = models.ForeignKey(
-        User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name=_("User")
-    )
+    user = models.CharField(_("User identifier"), null=True, blank=True, max_length=120)
+
     ip_addresses = models.CharField(_("Ip addresses"), max_length=50, null=True)
 
     """
