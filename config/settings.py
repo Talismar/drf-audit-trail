@@ -37,9 +37,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "drf_audit_trail",
     "core",
     "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
+    "drf_audit_trail",
 ]
 
 MIDDLEWARE = [
@@ -58,7 +59,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": ["templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -82,16 +83,13 @@ DATABASES = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     },
-    "drf_audit_trail": {
-        "NAME": BASE_DIR / "audit_trail_database.sqlite3",
+    "audit_trail": {
         "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "audit_trail.sqlite3",
     },
 }
 
-DRF_AUDIT_TRAIL_DB_ALIAS = "drf_audit_trail"
-
-# DATABASE_ROUTES = ["drf_audit_trail.database_router.DRFAuditTrailDatabaseRouter"]
-
+DATABASE_ROUTERS = ["drf_audit_trail.database_router.DRFAuditTrail"]
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -127,7 +125,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "mediafiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -136,15 +138,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
-    # "DEFAULT_PERMISSION_CLASSES": [
-    #     "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
-    # ]
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-        # "drf_audit_trail.authentication.SimpleJWTAuthenticationIntegration",
     ),
 }
 
@@ -157,6 +153,13 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": False,
     "SIGNING_KEY": "F7zbUkdlHIGsWmTxA2wq7uasRN5uZ159SFyCCe0wKvU31dmThvFo8tmJF4RJ1QTjp",
     "AUTH_HEADER_TYPES": ("Bearer",),
-    # It will work instead of the default serializer(TokenObtainPairSerializer).
-    # "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.CustomObtainPairSerializer",
 }
+
+
+DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS = [r"^(?!/admin/jsi18n/).*$"]
+DRF_AUDIT_TRAIL_AUTH_URL = [
+    "/api/token/",
+    "/admin/login/",
+    "/api/logout/",
+    "/admin/logout/",
+]

@@ -24,4 +24,5 @@ class DRFAuditTrailIntegrationMixin:
 
 class DRFAuditTrailTokenObtainPairView(
     DRFAuditTrailIntegrationMixin, TokenObtainPairView
-): ...
+):
+    pass
