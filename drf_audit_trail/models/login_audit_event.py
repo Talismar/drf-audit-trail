@@ -31,7 +31,6 @@ class LoginAuditEvent(BaseModelMixin):
     class Meta:
         verbose_name = _("Login audit event")
         verbose_name_plural = _("Login audit events")
-        db_table = "login_audit_event"
 
 
 @receiver(user_logged_out)

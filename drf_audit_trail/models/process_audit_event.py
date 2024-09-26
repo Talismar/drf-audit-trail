@@ -35,7 +35,6 @@ class ProcessAuditEvent(BaseModelMixin):
     class Meta:
         verbose_name = _("Process audit event")
         verbose_name_plural = _("Process audit events")
-        db_table = "process_audit_event"
 
 
 class StepAuditEvent(BaseModelMixin):
@@ -56,7 +55,6 @@ class StepAuditEvent(BaseModelMixin):
     class Meta:
         verbose_name = _("Step audit event")
         verbose_name_plural = _("Step audit events")
-        db_table = "step_audit_event"
 
 
 class RegistrationAuditEvent(BaseModelMixin):
@@ -76,4 +74,3 @@ class RegistrationAuditEvent(BaseModelMixin):
     class Meta:
         verbose_name = _("Registration audit event")
         verbose_name_plural = _("Registration audit events")
-        db_table = "registration_audit_event"
