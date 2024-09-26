@@ -49,4 +49,3 @@ class RequestAuditEvent(BaseModelMixin):
     class Meta:
         verbose_name = _("Request event")
         verbose_name_plural = _("Request events")
-        db_table = "request_audit_event"
