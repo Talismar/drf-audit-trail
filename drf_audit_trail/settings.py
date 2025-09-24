@@ -1,12 +1,5 @@
 from django.conf import settings
 
-# Retention Period
-"""
-Refere-se a quanitade de tempo de armazenamento dos registros em dias
-"""
-DRF_AUDIT_TRAIL_RETENTION_PERIOD = getattr(
-    settings, "DRF_AUDIT_TRAIL_RETENTION_PERIOD", 120
-)
 
 DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS = getattr(
     settings, "DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS", [r"^/api/.*?/"]
