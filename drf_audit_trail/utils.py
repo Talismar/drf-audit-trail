@@ -1,8 +1,11 @@
 import json
+import re
 
 from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken, TokenError
+from django.http import HttpRequest
 
+from drf_audit_trail.settings import DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS, DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS
 User = get_user_model()
 
 
@@ -72,3 +75,31 @@ def get_extra_informations(drf_request_audit_event: dict | None):
         return json.dumps(extra_informations)
     except Exception:
         return None
+
+
+def get_request_body(request: HttpRequest):
+    for i in DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS:
+        if bool(re.match(i, request.path)):
+            return None
+        
+    try:
+        if request.content_type == "application/json":
+            body_unicode = request.body.decode("utf-8")
+            return json.dumps(body_unicode, ensure_ascii=False)
+    except Exception:
+        pass
+    return None
+
+
+def get_response_body(request: HttpRequest, response):
+    for i in DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS:
+        if bool(re.match(i, request.path)):
+            return None
+        
+    try:
+        if response.get("Content-Type") == "application/json":
+            body_unicode = response.content.decode("utf-8")
+            return json.dumps(body_unicode, ensure_ascii=False)
+    except Exception:
+        pass
+    return None

@@ -8,6 +8,8 @@ from drf_audit_trail.utils import (
     get_authenticated_user_by_request,
     get_extra_informations,
     get_ip_addresses,
+    get_request_body,
+    get_response_body,
     get_response_size,
 )
 
@@ -43,6 +45,8 @@ class RequestAuditEventManager(Manager):
                 error_message=error_message,
                 error_stacktrace=error_stacktrace,
                 extra_informations=extra_informations,
+                request_body=get_request_body(request),
+                response_body=get_response_body(request, response) if response else None
             )
 
         if process_audit_event is not None and instance is not None:

@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from functools import lru_cache
 
 from .models import (
     LoginAuditEvent,
@@ -13,6 +14,7 @@ from .settings import DRF_AUDIT_TRAIL_USER_PK_NAME
 UserModel = get_user_model()
 
 
+@lru_cache(maxsize=128)
 def _get_user_by_id(user_id: str | None):
     try:
         filter_param = {DRF_AUDIT_TRAIL_USER_PK_NAME: user_id}
@@ -34,7 +36,7 @@ class RequestAuditEventModelAdmin(admin.ModelAdmin):
         "request_type",
     )
     list_filter = ("method", "ip_addresses")
-    search_fields = ("method", "ip_addresses", "status_code")
+    search_fields = ("method", "ip_addresses", "status_code", "user", "url")
 
     def _user(self, obj: RequestAuditEvent):
         return _get_user_by_id(obj.user)
@@ -53,6 +55,7 @@ class LoginAuditEventModelAdmin(admin.ModelAdmin):
         "request__status_code",
     )
     list_filter = ("status",)
+    search_fields = ("request__ip_addresses", "request__user", "request__url")
 
     @admin.display()
     def request_ip_addresses(self, obj):

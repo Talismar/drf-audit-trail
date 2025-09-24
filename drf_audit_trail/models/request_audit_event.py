@@ -27,7 +27,8 @@ class RequestAuditEvent(BaseModelMixin):
     request_type = models.CharField(
         _("Request Type"), max_length=10, null=True, blank=True
     )
-    # body = models.TextField(_("Body"), blank=True, default=dict)
+    request_body = models.TextField(_("Request Body"), blank=True, null=True)
+    response_body = models.TextField(_("Response Body"), blank=True, null=True)
 
     # Response Information
     status_code = models.IntegerField(_("Status Code"), null=True)

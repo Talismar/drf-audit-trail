@@ -812,7 +812,7 @@
     </mxGraphModel>
   </diagram>
   <diagram id="_T3myKxGhLDHE2J3bzrT" name="Page-5">
-    <mxGraphModel dx="2377" dy="2037" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="1995" dy="1803" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -889,6 +889,57 @@
           <mxGeometry x="-0.0323" y="-2" relative="1" as="geometry">
             <mxPoint as="offset" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="RN5EB8eAp4yYyIfsEdPM-1" target="RN5EB8eAp4yYyIfsEdPM-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="RN5EB8eAp4yYyIfsEdPM-1" target="RN5EB8eAp4yYyIfsEdPM-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-1" value="Pgaudit níveis de auditoria" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="785" y="-860" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="RN5EB8eAp4yYyIfsEdPM-2" target="RN5EB8eAp4yYyIfsEdPM-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="RN5EB8eAp4yYyIfsEdPM-2" target="RN5EB8eAp4yYyIfsEdPM-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="RN5EB8eAp4yYyIfsEdPM-2" target="RN5EB8eAp4yYyIfsEdPM-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-2" value="Nível de sessão" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="-750" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="RN5EB8eAp4yYyIfsEdPM-4" target="RN5EB8eAp4yYyIfsEdPM-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="RN5EB8eAp4yYyIfsEdPM-4" target="RN5EB8eAp4yYyIfsEdPM-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="RN5EB8eAp4yYyIfsEdPM-4" target="RN5EB8eAp4yYyIfsEdPM-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-4" value="Nível de objeto" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1035" y="-750" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-6" value="Rastreia todas as operações SQL em uma sessão" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="440" y="-620" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-7" value="Logs de usuário, tempo, e detalhes da sessão" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="740" y="-620" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-8" value="Registra ações como SELECT, INSERT, UPDATE, DELETE" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="590" y="-620" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-12" value="Monitora objetos de banco de dados específicos" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="880" y="-620" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-13" value="Audita operações em tabelas, índices ou visualizações" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1035" y="-620" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="RN5EB8eAp4yYyIfsEdPM-14" value="Rastreia alterações sensíveis como CREATE, ALTER, DROP" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="1190" y="-620" width="120" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
