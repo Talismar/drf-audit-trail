@@ -223,6 +223,31 @@ class ProductViewSet(ModelViewSet):
         return Response(serializer.data, status=201, headers=headers)
 ```
 
+---
+
+## Handling Long Data and Preventing Database Errors
+
+Starting from version X.X.X, DRF Audit Trail automatically prevents `DataError` (e.g., `StringDataRightTruncation`) when saving audit events, even when request parameters (like URLs or query strings) exceed the database limit.
+
+### How does it work?
+
+- Fields sensitive to length, such as `url` and `query_params` in the `RequestAuditEvent` model, use a custom field that **automatically truncates** values exceeding the database limit (e.g., 2048 characters).
+- When truncation occurs, a warning is logged via Python (`drf_audit_trail.truncation`), enabling traceability.
+- This ensures the audit middleware **never causes a request to fail** due to oversized data, making the solution robust for public APIs or endpoints with extensive parameters.
+
+### Example of truncation log
+
+```
+WARNING drf_audit_trail.truncation: Truncating value for field 'url' to 2048 characters. Original length: 3010.
+```
+
+### Notes
+- Truncation is transparent to the library user.
+- To audit this behavior, set the log level to `WARNING` in the `drf_audit_trail.truncation` logger.
+- This behavior applies to all fields of type `TruncatingCharField`.
+
+---
+
 ## License
 
 MIT License

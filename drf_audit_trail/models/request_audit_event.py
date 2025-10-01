@@ -1,4 +1,5 @@
 from django.db import models
+from drf_audit_trail.fields import TruncatingCharField
 from django.utils.translation import gettext_lazy as _
 
 from drf_audit_trail.managers import RequestAuditEventManager
@@ -8,6 +9,10 @@ from drf_audit_trail.mixins import BaseModelMixin
 class RequestAuditEvent(BaseModelMixin):
     """
     This is the model for the request audit trail.
+
+    TruncatingCharField fields are automatically truncated to the maximum length allowed by the database.
+    When truncation occurs, a warning is logged in the 'drf_audit_trail.truncation' log.
+    This prevents DataErrors due to oversizing and increases the robustness of the audit middleware.
     """
 
     user = models.CharField(_("User identifier"), null=True, blank=True, max_length=120)
@@ -18,10 +23,10 @@ class RequestAuditEvent(BaseModelMixin):
         methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
     """
     method = models.CharField(_("Method"), max_length=10)
-    url = models.CharField(_("URL"), null=False, max_length=2048)
+    url = TruncatingCharField(_("URL"), null=False, max_length=2048)
 
     # Request Parameters
-    query_params = models.CharField(
+    query_params = TruncatingCharField(
         _("Query Parameters"), blank=True, null=True, max_length=2048
     )
     request_type = models.CharField(
@@ -36,7 +41,7 @@ class RequestAuditEvent(BaseModelMixin):
     response_size = models.IntegerField(_("Response Size (bytes)"), null=True)
 
     # Error Handling
-    error_type = models.CharField(
+    error_type = TruncatingCharField(
         _("Error Type"), max_length=255, blank=True, null=True
     )
     error_message = models.TextField(_("Error Message"), blank=True, null=True)

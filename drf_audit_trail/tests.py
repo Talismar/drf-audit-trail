@@ -1,8 +1,8 @@
+import logging
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 
 from drf_audit_trail.models import LoginAuditEvent, RequestAuditEvent
-
 
 class MiddlewareTestCase(TestCase):
     databases = {"default", "audit_trail"}
@@ -72,3 +72,30 @@ class MiddlewareTestCase(TestCase):
         self.assertIsNotNone(request_audit_event.user)
         self.assertEqual(request_audit_event.user, "1")
         self.assertEqual(response.status_code, request_audit_event.status_code)
+
+    def test_url_and_query_params_are_truncated(self):
+        long_url = "/api/test/" + ("a" * 3000)
+        long_query = "param=" + ("b" * 3000)
+        client = Client()
+        # Simula request com url e query_params longos
+        response = client.get(long_url + "?" + long_query)
+        event = RequestAuditEvent.objects.last()
+        self.assertIsNotNone(event)
+        self.assertLessEqual(len(event.url), 2048)
+        self.assertLessEqual(len(event.query_params or ""), 2048)
+
+    def test_truncation_logs_warning(self):
+        import io
+        import sys
+        logger = logging.getLogger("drf_audit_trail.truncation")
+        stream = io.StringIO()
+        handler = logging.StreamHandler(stream)
+        logger.addHandler(handler)
+        logger.setLevel(logging.WARNING)
+        long_url = "/api/test/" + ("a" * 3000)
+        client = Client()
+        client.get(long_url)
+        handler.flush()
+        log_output = stream.getvalue()
+        logger.removeHandler(handler)
+        self.assertIn("Truncating value for field", log_output)
