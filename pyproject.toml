@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "drf-audit-trail"
-version = "0.3.8"
+version = "0.3.9"
 description = "A reusable django [DRF] application that handles auditing of requests, logins and process"
 authors = ["Talismar Fernandes Costa <talismar788.una@gmail.com>"]
 readme = "README.md"

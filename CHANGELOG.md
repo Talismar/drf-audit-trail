@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.9 - 2025-10-01
 
 ### Added
 - Automatic truncation for oversized fields in audit events (e.g., `url`, `query_params` in `RequestAuditEvent`).
