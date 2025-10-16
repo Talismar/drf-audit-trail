@@ -11,7 +11,6 @@ from drf_audit_trail.settings import (
     DRF_AUDIT_TRAIL_AUTH_URL,
     DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS,
 )
-from drf_audit_trail.utils import get_request_body, get_response_body
 
 
 class RequestLoginAuditEventMiddleware(MiddlewareMixin):

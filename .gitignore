@@ -271,3 +271,4 @@ pyrightconfig.json
 # Studies files
 *study.py
 audit_trail.sqlite3
+.backup

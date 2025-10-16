@@ -1,7 +1,8 @@
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from core.process_audit import CreateProductProcessAudit, DeleteProductProcessAudit
 from core.api.serializers import ProductSerializer
 from core.models import Product
@@ -66,6 +67,15 @@ class ProductViewSet(ModelViewSet):
             )
             raise
         return Response(status=204)
+
+    @action(
+        methods=["post"],
+        detail=False,
+        url_path=r"reset_password/(?P<uidb64>\w+)/(?P<token>[\w\.-]+)",
+        permission_classes=[AllowAny],
+    )
+    def reset_password(self, request, uidb64, token):
+        return Response({"uidb64": uidb64, "token": token})
 
 
 class TestAPIView(APIView):

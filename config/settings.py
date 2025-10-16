@@ -79,7 +79,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    "default":  {
+    "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     },
@@ -163,4 +163,10 @@ DRF_AUDIT_TRAIL_AUTH_URL = [
     "/api/logout/",
     "/admin/logout/",
 ]
-DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS = ['/api/token']
+DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS = [
+    {"route": "/api/token", "method": "POST"},
+    {
+        "route": "/api/product/reset_password/(?P<uidb64>\w+)/(?P<token>[\w\.-]+)",
+        "method": "POST",
+    },
+]

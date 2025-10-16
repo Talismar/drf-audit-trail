@@ -5,7 +5,11 @@ from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import AccessToken, TokenError
 from django.http import HttpRequest
 
-from drf_audit_trail.settings import DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS, DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS
+from drf_audit_trail.settings import (
+    DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS,
+    DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS,
+)
+
 User = get_user_model()
 
 
@@ -78,10 +82,9 @@ def get_extra_informations(drf_request_audit_event: dict | None):
 
 
 def get_request_body(request: HttpRequest):
-    for i in DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS:
-        if bool(re.match(i, request.path)):
-            return None
-        
+    if audit_enable_by_url_configs(DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS, request):
+        return None
+
     try:
         if request.content_type == "application/json":
             body_unicode = request.body.decode("utf-8")
@@ -92,10 +95,9 @@ def get_request_body(request: HttpRequest):
 
 
 def get_response_body(request: HttpRequest, response):
-    for i in DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS:
-        if bool(re.match(i, request.path)):
-            return None
-        
+    if audit_enable_by_url_configs(DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS, request):
+        return None
+
     try:
         if response.get("Content-Type") == "application/json":
             body_unicode = response.content.decode("utf-8")
@@ -103,3 +105,24 @@ def get_response_body(request: HttpRequest, response):
     except Exception:
         pass
     return None
+
+
+def audit_enable_by_url_configs(url_configs: list, request: HttpRequest):
+    for url in url_configs:
+        if isinstance(url, dict):
+            route = url.get("route")
+            method = url.get("method")
+
+            if (
+                (isinstance(route, str) and isinstance(method, str))
+                and bool(re.match(route, request.path))
+                and (method == request.method or method == "ALL")
+            ):
+                return True
+
+            continue
+
+        if bool(re.match(url, request.path)):
+            return True
+
+    return False
