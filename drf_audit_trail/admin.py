@@ -53,9 +53,6 @@ class RequestAuditEventModelAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
     def _user(self, obj: RequestAuditEvent):
         return _get_user_by_id(obj.user)
 
-    def has_add_permission(self, request):
-        return False
-
 
 admin.site.register(RequestAuditEvent, RequestAuditEventModelAdmin)
 
@@ -72,9 +69,6 @@ class LoginAuditEventModelAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("request__ip_addresses", "request__user", "request__url")
     readonly_fields = ["request"]
-
-    def has_add_permission(self, request):
-        return False
 
     @admin.display()
     def request_ip_addresses(self, obj):
