@@ -26,7 +26,18 @@ def _get_user_by_id(user_id: str | None):
         pass
 
 
-class RequestAuditEventModelAdmin(admin.ModelAdmin):
+class ReadonlyAdminMixin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class RequestAuditEventModelAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "method",
@@ -49,7 +60,7 @@ class RequestAuditEventModelAdmin(admin.ModelAdmin):
 admin.site.register(RequestAuditEvent, RequestAuditEventModelAdmin)
 
 
-class LoginAuditEventModelAdmin(admin.ModelAdmin):
+class LoginAuditEventModelAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
     list_display = (
         "id",
         "user",
