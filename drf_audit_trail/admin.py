@@ -1,6 +1,7 @@
+from functools import lru_cache
+
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from functools import lru_cache
 
 from .models import (
     LoginAuditEvent,
@@ -41,6 +42,9 @@ class RequestAuditEventModelAdmin(admin.ModelAdmin):
     def _user(self, obj: RequestAuditEvent):
         return _get_user_by_id(obj.user)
 
+    def has_add_permission(self, request):
+        return False
+
 
 admin.site.register(RequestAuditEvent, RequestAuditEventModelAdmin)
 
@@ -56,6 +60,10 @@ class LoginAuditEventModelAdmin(admin.ModelAdmin):
     )
     list_filter = ("status",)
     search_fields = ("request__ip_addresses", "request__user", "request__url")
+    readonly_fields = ["request"]
+
+    def has_add_permission(self, request):
+        return False
 
     @admin.display()
     def request_ip_addresses(self, obj):
