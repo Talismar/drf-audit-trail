@@ -152,7 +152,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": False,
     "SIGNING_KEY": "F7zbUkdlHIGsWmTxA2wq7uasRN5uZ159SFyCCe0wKvU31dmThvFo8tmJF4RJ1QTjp",
-    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_TYPES": ("Bearer","Token"),
 }
 
 

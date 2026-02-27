@@ -38,11 +38,11 @@ def get_response_size(response):
 def get_user_by_raw_authorization_header(request):
     authorization_header = request.headers.get("Authorization")
 
-    if not authorization_header or "Bearer " not in authorization_header:
+    if not authorization_header or ("Bearer " not in authorization_header and "Token " not in authorization_header):
         return None
 
     try:
-        raw_access_token = authorization_header.split("Bearer ")[1]
+        raw_access_token = authorization_header.split("Bearer ")[1] if "Bearer " in authorization_header else authorization_header.split("Token ")[1]
         access_token = AccessToken(raw_access_token)
         return User.objects.get(pk=access_token.get("user_id"))
     except (TokenError, User.DoesNotExist, IndexError):
