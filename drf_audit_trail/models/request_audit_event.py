@@ -1,7 +1,7 @@
 from django.db import models
-from drf_audit_trail.fields import TruncatingCharField
 from django.utils.translation import gettext_lazy as _
 
+from drf_audit_trail.fields import TruncatingCharField
 from drf_audit_trail.managers import RequestAuditEventManager
 from drf_audit_trail.mixins import BaseModelMixin
 
@@ -35,7 +35,10 @@ class RequestAuditEvent(BaseModelMixin):
     request_body = models.TextField(_("Request Body"), blank=True, null=True)
     response_body = models.TextField(_("Response Body"), blank=True, null=True)
 
-    # Response Information
+    # Request/Response Information
+    user_agent = TruncatingCharField(
+        _("User Agent"), max_length=512, blank=True, null=True
+    )
     status_code = models.IntegerField(_("Status Code"), null=True)
     response_time = models.FloatField(_("Response Time (ms)"), null=True)
     response_size = models.IntegerField(_("Response Size (bytes)"), null=True)

@@ -16,6 +16,7 @@ from drf_audit_trail.utils import (
 
 class RequestAuditEventManager(Manager):
     def create_by_request(self, request, response=None):
+        user_agent = request.META.get("HTTP_USER_AGENT")
         request_meta = getattr(request, "META")
         start_time = request_meta.get("drf_audit_trail_request_start_time")
         authenticated_user = get_authenticated_user_by_request(request)
@@ -46,7 +47,10 @@ class RequestAuditEventManager(Manager):
                 error_stacktrace=error_stacktrace,
                 extra_informations=extra_informations,
                 request_body=get_request_body(request),
-                response_body=get_response_body(request, response) if response else None
+                response_body=(
+                    get_response_body(request, response) if response else None
+                ),
+                user_agent=user_agent if isinstance(user_agent, str) else None,
             )
 
         if process_audit_event is not None and instance is not None:
