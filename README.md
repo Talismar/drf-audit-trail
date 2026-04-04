@@ -90,9 +90,36 @@ All settings are optional and have sensible defaults.
 
 - **RequestAuditEvent:** HTTP request auditing.
 - **LoginAuditEvent:** Login/logout auditing.
-- **ProcessAuditEvent:** Custom process auditing.
-- **StepAuditEvent:** Process step auditing.
-- **RegistrationAuditEvent:** Execution registration for each step.
+- **ProcessAuditEvent:** Represents the entire process execution.
+- **StepAuditEvent:** Represents each step that belongs to the process.
+- **RegistrationAuditEvent:** Represents each execution record created during the process flow.
+
+---
+
+## How Process Auditing Works
+
+Process auditing is organized as a hierarchy:
+
+- `ProcessAuditEvent` is the process as a whole.
+- `StepAuditEvent` contains all steps that belong to that process.
+- `RegistrationAuditEvent` stores each record executed inside the process flow.
+
+This means:
+
+- one process can have many steps
+- one step can have many registrations
+- each registration tells what happened during the execution of that step
+
+Typical examples of registrations are:
+
+- validation succeeded
+- validation failed
+- database save completed
+- external integration returned an error
+
+The structure below illustrates this relationship:
+
+![Process audit structure](docs/process_audit_structure.png)
 
 ---
 

@@ -1,0 +1,10 @@
+{% extends "admin/change_form.html" %}
+
+{% block object-tools-items %}
+{% if original and audit_report_url %}
+<li>
+    <a href="{{ audit_report_url }}">Download Audit PDF</a>
+</li>
+{% endif %}
+{{ block.super }}
+{% endblock %}

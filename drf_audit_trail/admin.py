@@ -2,6 +2,8 @@ from functools import lru_cache
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
+from django.utils.html import format_html
+from django.urls import path, reverse
 
 from .models import (
     LoginAuditEvent,
@@ -11,6 +13,7 @@ from .models import (
     StepAuditEvent,
 )
 from .settings import DRF_AUDIT_TRAIL_USER_PK_NAME
+from .views import get_process_for_report, render_process_report_response
 
 UserModel = get_user_model()
 
@@ -89,9 +92,55 @@ admin.site.register(LoginAuditEvent, LoginAuditEventModelAdmin)
 
 
 class ProcessAuditEventModelAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "success", "request", "user")
+    list_display = ("id", "name", "success", "request", "user", "download_audit_pdf")
     list_filter = ("name",)
     search_fields = ("name",)
+    change_form_template = "admin/drf_audit_trail/processauditevent/change_form.html"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        opts = self.model._meta
+        custom_urls = [
+            path(
+                "<path:object_id>/audit-report/",
+                self.admin_site.admin_view(self.audit_report_view),
+                name=f"{opts.app_label}_{opts.model_name}_audit_report",
+            )
+        ]
+        return custom_urls + urls
+
+    def change_view(self, request, object_id, form_url="", extra_context=None):
+        extra_context = extra_context or {}
+        extra_context["audit_report_url"] = self.get_audit_report_url(object_id)
+        return super().change_view(
+            request,
+            object_id,
+            form_url=form_url,
+            extra_context=extra_context,
+        )
+
+    def audit_report_view(self, request, object_id):
+        process = get_process_for_report(object_id)
+        return render_process_report_response(
+            [process],
+            filename=f"process_audit_report_{process.pk}.pdf",
+            content_disposition="attachment",
+        )
+
+    def get_audit_report_url(self, object_id):
+        opts = self.model._meta
+        return reverse(
+            f"admin:{opts.app_label}_{opts.model_name}_audit_report",
+            args=[object_id],
+            current_app=self.admin_site.name,
+        )
+
+    @admin.display(description="Audit PDF")
+    def download_audit_pdf(self, obj):
+        return format_html(
+            '<a class="button" href="{}">Download PDF</a>',
+            self.get_audit_report_url(obj.pk),
+        )
 
     def user(self, obj):
         return _get_user_by_id(obj.created_by)
