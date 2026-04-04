@@ -12,8 +12,7 @@ python = "^3.10"
 django = ">=4.0"
 djangorestframework-simplejwt = "^5.2.2"
 djangorestframework = "^3.14.0"
-weasyprint = "^62.3"
-
+weasyprint = ">=68.0"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.24.0"
