@@ -1,7 +1,9 @@
 import json
 import re
+from functools import lru_cache
 
 from django.contrib.auth import get_user_model
+from django.core.serializers.json import DjangoJSONEncoder
 from rest_framework_simplejwt.tokens import AccessToken, TokenError
 from django.http import HttpRequest
 
@@ -9,8 +11,20 @@ from drf_audit_trail.settings import (
     DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS,
     DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS,
 )
+from .settings import DRF_AUDIT_TRAIL_USER_PK_NAME
 
 User = get_user_model()
+
+
+@lru_cache(maxsize=128)
+def get_user_by_pk_name(value: str | None):
+    try:
+        filter_param = {DRF_AUDIT_TRAIL_USER_PK_NAME: value}
+        user = User.objects.filter(**filter_param).first()
+        if user is not None:
+            return user
+    except ValueError:
+        pass
 
 
 def _get_remote_addr(environ: dict):
@@ -38,11 +52,17 @@ def get_response_size(response):
 def get_user_by_raw_authorization_header(request):
     authorization_header = request.headers.get("Authorization")
 
-    if not authorization_header or ("Bearer " not in authorization_header and "Token " not in authorization_header):
+    if not authorization_header or (
+        "Bearer " not in authorization_header and "Token " not in authorization_header
+    ):
         return None
 
     try:
-        raw_access_token = authorization_header.split("Bearer ")[1] if "Bearer " in authorization_header else authorization_header.split("Token ")[1]
+        raw_access_token = (
+            authorization_header.split("Bearer ")[1]
+            if "Bearer " in authorization_header
+            else authorization_header.split("Token ")[1]
+        )
         access_token = AccessToken(raw_access_token)
         return User.objects.get(pk=access_token.get("user_id"))
     except (TokenError, User.DoesNotExist, IndexError):
@@ -57,6 +77,20 @@ def get_authenticated_user_by_request(request):
         user = get_user_by_raw_authorization_header(request)
 
     return user
+
+
+def get_user_role_by_django_groups(user, request=None):
+    if user is None or not getattr(user, "is_authenticated", False):
+        return None
+
+    try:
+        group = user.groups.order_by("pk").first()
+    except AttributeError:
+        return None
+
+    if group is None:
+        return None
+    return group.name
 
 
 def is_json(data):
@@ -79,6 +113,29 @@ def get_extra_informations(drf_request_audit_event: dict | None):
         return json.dumps(extra_informations)
     except Exception:
         return None
+
+
+def serialize_audit_value(value):
+    if value is None:
+        return None
+
+    if isinstance(value, str) and is_json(value):
+        return value
+
+    try:
+        return json.dumps(value, cls=DjangoJSONEncoder, ensure_ascii=False)
+    except TypeError:
+        return json.dumps(str(value), ensure_ascii=False)
+
+
+def deserialize_audit_value(value):
+    if value in (None, ""):
+        return None
+
+    try:
+        return json.loads(value)
+    except (TypeError, ValueError):
+        return value
 
 
 def get_request_body(request: HttpRequest):

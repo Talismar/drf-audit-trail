@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Added `AuditLogEntry` for structured audit log rows tied optionally to `RequestAuditEvent`.
+- Added `audit_log` decorator for views and `record_system_event` for request-less system actions.
+- Added text-based JSON serialization for `old_values`, `new_values`, and `extra_informations`.
+- Added configurable active user role resolution for `AuditLogEntry.actor_role`.
+
 ## 0.3.9 - 2025-10-01
 
 ### Added

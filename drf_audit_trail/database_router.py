@@ -1,4 +1,7 @@
-from drf_audit_trail.settings import DJANO_DEFAULT_DATABASE_ALIAS, DRF_AUDIT_TRAIL_DATABASE_ALIAS
+from drf_audit_trail.settings import (
+    DJANGO_DEFAULT_DATABASE_ALIAS,
+    DRF_AUDIT_TRAIL_DATABASE_ALIAS,
+)
 
 
 class DRFAuditTrail:
@@ -29,5 +32,5 @@ class DRFAuditTrail:
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         if app_label in self.route_app_labels:
             return db == DRF_AUDIT_TRAIL_DATABASE_ALIAS
-        
-        return db == DJANO_DEFAULT_DATABASE_ALIAS
+
+        return db == DJANGO_DEFAULT_DATABASE_ALIAS

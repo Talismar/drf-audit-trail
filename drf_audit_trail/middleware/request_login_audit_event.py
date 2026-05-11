@@ -6,6 +6,10 @@ from asgiref.sync import sync_to_async
 from django.http import HttpRequest
 from django.utils.deprecation import MiddlewareMixin
 
+from drf_audit_trail.audit_log import (
+    has_pending_audit_log_entries,
+    persist_pending_audit_log_entries,
+)
 from drf_audit_trail.models import LoginAuditEvent, RequestAuditEvent
 from drf_audit_trail.settings import (
     DRF_AUDIT_TRAIL_AUTH_URL,
@@ -27,7 +31,7 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
         request_audit_event_enabled = self._start_request(request)
 
         response = await self.get_response(request)
-        if request_audit_event_enabled:
+        if self._should_create_audit_instances(request, request_audit_event_enabled):
             await sync_to_async(self._create_instances, thread_sensitive=True)(
                 request, response
             )
@@ -41,7 +45,7 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
         request._body = raw_body
 
         response = self.get_response(request)
-        if request_audit_event_enabled:
+        if self._should_create_audit_instances(request, request_audit_event_enabled):
             self._create_instances(request, response)
 
         return response
@@ -68,7 +72,13 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
                 request, response, request_audit_event
             )
 
+        if isinstance(request_audit_event, RequestAuditEvent):
+            persist_pending_audit_log_entries(request, request_audit_event)
+
         return response
+
+    def _should_create_audit_instances(self, request, request_audit_event_enabled):
+        return request_audit_event_enabled or has_pending_audit_log_entries(request)
 
     def _is_request_audit_enabled(self, request):
         for i in DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS:

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 8mm;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 8px;
+            color: #111;
+        }
+
+        h1 {
+            font-size: 16px;
+            margin: 0 0 8px;
+        }
+
+        .report-meta {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        .report-meta th,
+        .report-meta td {
+            border: 1px solid #777;
+            padding: 4px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .report-meta th {
+            width: 22%;
+            background: #ececec;
+        }
+
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .audit-table th,
+        .audit-table td {
+            border: 1px solid #777;
+            padding: 3px;
+            text-align: left;
+            vertical-align: top;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .audit-table th {
+            background: #d9e6f2;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ title }}</h1>
+
+    <table class="report-meta">
+        <tbody>
+            <tr>
+                <th>Who Pulled the report</th>
+                <td>{{ pulled_by }}</td>
+            </tr>
+            <tr>
+                <th>When the report was pulled</th>
+                <td>{{ pulled_at }}</td>
+            </tr>
+            <tr>
+                <th>Filters applied</th>
+                <td>
+                    {% if filters %}
+                        {% for filter in filters %}
+                            {{ filter.name }}={{ filter.value }}{% if not forloop.last %}; {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="audit-table">
+        <thead>
+            <tr>
+                {% for column in columns %}
+                    <th>{{ column }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for value in row %}
+                        <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="{{ columns|length }}">No audit log entries found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

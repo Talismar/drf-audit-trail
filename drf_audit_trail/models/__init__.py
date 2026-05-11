@@ -1,3 +1,4 @@
+from .audit_log_entry import AuditLogEntry
 from .login_audit_event import LoginAuditEvent
 from .process_audit_event import (
     ProcessAuditEvent,
@@ -7,6 +8,7 @@ from .process_audit_event import (
 from .request_audit_event import RequestAuditEvent
 
 __all__ = [
+    "AuditLogEntry",
     "LoginAuditEvent",
     "RequestAuditEvent",
     "ProcessAuditEvent",

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+</head>
+<body>
+    <table>
+        <tbody>
+            <tr>
+                <th>Who Pulled the report</th>
+                <td>{{ pulled_by }}</td>
+            </tr>
+            <tr>
+                <th>When the report was pulled</th>
+                <td>{{ pulled_at }}</td>
+            </tr>
+            <tr>
+                <th>Filters applied</th>
+                <td>
+                    {% if filters %}
+                        {% for filter in filters %}
+                            {{ filter.name }}={{ filter.value }}{% if not forloop.last %}; {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table border="1">
+        <thead>
+            <tr>
+                {% for column in columns %}
+                    <th>{{ column }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    {% for value in row %}
+                        <td>{{ value }}</td>
+                    {% endfor %}
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="{{ columns|length }}">No audit log entries found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

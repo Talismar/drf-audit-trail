@@ -1,0 +1,14 @@
+{% extends "admin/change_list.html" %}
+
+{% block object-tools-items %}
+    {{ block.super }}
+    <li>
+        <a href="{{ audit_log_export_csv_url }}">Export CSV</a>
+    </li>
+    <li>
+        <a href="{{ audit_log_export_xls_url }}">Export XLS</a>
+    </li>
+    <li>
+        <a href="{{ audit_log_export_pdf_url }}">Export PDF</a>
+    </li>
+{% endblock %}

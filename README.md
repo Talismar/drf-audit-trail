@@ -8,6 +8,7 @@ A reusable Django DRF application for auditing requests, logins, and custom proc
 
 - HTTP request auditing (`RequestAuditEvent`)
 - Login and logout auditing (`LoginAuditEvent`)
+- Structured audit log entries (`AuditLogEntry`)
 - Custom process auditing (`ProcessAuditEvent`, `StepAuditEvent`, `RegistrationAuditEvent`)
 - Integration with SimpleJWT
 - Django Async support
@@ -58,7 +59,7 @@ DATABASES = {
 }
 
 DRF_AUDIT_TRAIL_DATABASE_ALIAS = "audit_trail"  # Audit database alias
-DJANO_DEFAULT_DATABASE_ALIAS = "default"  # Default database alias
+DJANGO_DEFAULT_DATABASE_ALIAS = "default"  # Default database alias
 
 DATABASE_ROUTERS = ["drf_audit_trail.database_router.DRFAuditTrail"]
 ```
@@ -79,6 +80,9 @@ DRF_AUDIT_TRAIL_AUTH_URL = [
 ]  # Authentication endpoints
 DRF_AUDIT_TRAIL_AUTH_STATUS_CODE_FAILED = 401  # Auth failure status code
 DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS = ['/api/token']  # Endpoints that do not save request body
+DRF_AUDIT_TRAIL_USER_ROLE_GETTER = "drf_audit_trail.utils.get_user_role_by_django_groups"  # Active user role getter
+DRF_AUDIT_TRAIL_DEFAULT_SYSTEM_ACTOR_IDENTIFIER = "system"  # Default identifier for system audit events
+DRF_AUDIT_TRAIL_DEFAULT_SYSTEM_ACTOR_ROLE = "System"  # Default role for system audit events
 DRF_AUDIT_TRAIL_USER_PK_NAME = "pk"  # User PK field name
 ```
 
@@ -90,6 +94,7 @@ All settings are optional and have sensible defaults.
 
 - **RequestAuditEvent:** HTTP request auditing.
 - **LoginAuditEvent:** Login/logout auditing.
+- **AuditLogEntry:** Structured, report-friendly audit entries for user or system actions. Entries can be linked to a `RequestAuditEvent` or stored without a request for background/system activity. The audited object is referenced generically with `content_type`, `object_id`, and `object_repr`, so application-specific concepts stay outside the reusable package.
 - **ProcessAuditEvent:** Represents the entire process execution.
 - **StepAuditEvent:** Represents each step that belongs to the process.
 - **RegistrationAuditEvent:** Represents each execution record created during the process flow.
@@ -140,7 +145,139 @@ class TestAPIView(APIView):
 
 ---
 
+## Example: Structured Audit Log
+
+Use `audit_log` when you need a flat, report-friendly audit entry tied to the current request.
+When `old_values` or `new_values` are set, `field_name` must also be provided.
+When both `old_values` and `new_values` are set, `reason_for_change` must also
+be provided before the audit entry is saved.
+
+```python
+from drf_audit_trail.audit_log import audit_log
+
+
+@audit_log(
+    event_type="Update",
+    action_description="Updated product price",
+    field_name="price",
+)
+def update_product(request, product_id, audit_log):
+    product = Product.objects.get(pk=product_id)
+    old_price = product.price
+
+    product.price = request.data["price"]
+    product.save()
+
+    audit_log.set_content_object(product)
+    audit_log.old_values = str(old_price)
+    audit_log.new_values = str(product.price)
+    audit_log.reason_for_change = request.data.get("reason_for_change")
+    audit_log.extra_informations = {"source": "api"}
+```
+
+For multiple field changes, add one entry per changed field:
+
+```python
+audit_log.add_field_change(
+    field_name="price",
+    old_values="10.00",
+    new_values="12.00",
+    reason_for_change="Correction after review",
+)
+```
+
+For system actions without a request:
+
+```python
+from drf_audit_trail.audit_log import record_system_event
+
+record_system_event(
+    event_type="System Action",
+    action_description="Auto-save product",
+    actor_identifier="system",
+    content_object=product,
+    field_name="autosaved",
+    new_values=True,
+)
+```
+
+`old_values`, `new_values`, and `extra_informations` are stored in `TextField` columns with JSON serialization. Admin exports format old and new values as human-readable text instead of raw JSON.
+
+If `actor_role` is not set in the decorator or draft, DRF Audit Trail calls `DRF_AUDIT_TRAIL_USER_ROLE_GETTER` to resolve it from the active user. The default getter uses the first Django group assigned to the user. You can configure a custom dotted path; the callable should accept `(user, request=None)`.
+
+### Audit Log Admin Exports
+
+The Django admin changelist for `AuditLogEntry` includes CSV, XLS, and PDF export buttons. Exports use the currently filtered admin queryset and include who pulled the report, when it was pulled, and the filters applied.
+
+Filters that depend on the consuming application's domain, such as Sponsor, Study, Site, Subject, or Investigator, should be implemented by that application. DRF Audit Trail keeps the reusable model generic and does not add project-specific fields such as `sponsor`, `study`, or `site`.
+
+### Customizing Audit Log Admin Filters
+
+Projects can unregister the default admin and register their own subclass of `AuditLogEntryModelAdmin`.
+
+To expose any stored actor role as a regular Django admin filter:
+
+```python
+from django.contrib import admin
+from django.contrib.admin.sites import NotRegistered
+
+from drf_audit_trail.admin import AuditLogEntryModelAdmin
+from drf_audit_trail.models import AuditLogEntry
+
+
+try:
+    admin.site.unregister(AuditLogEntry)
+except NotRegistered:
+    pass
+
+
+@admin.register(AuditLogEntry)
+class ProjectAuditLogEntryAdmin(AuditLogEntryModelAdmin):
+    list_filter = AuditLogEntryModelAdmin.list_filter + ("actor_role",)
+```
+
+To expose only an explicit Investigator role filter:
+
+```python
+from django.contrib import admin
+from django.contrib.admin import SimpleListFilter
+from django.contrib.admin.sites import NotRegistered
+
+from drf_audit_trail.admin import AuditLogEntryModelAdmin
+from drf_audit_trail.models import AuditLogEntry
+
+
+class InvestigatorRoleFilter(SimpleListFilter):
+    title = "Role"
+    parameter_name = "role"
+
+    def lookups(self, request, model_admin):
+        return (("investigator", "Investigator"),)
+
+    def queryset(self, request, queryset):
+        if self.value() == "investigator":
+            return queryset.filter(actor_role="Investigator")
+        return queryset
+
+
+try:
+    admin.site.unregister(AuditLogEntry)
+except NotRegistered:
+    pass
+
+
+@admin.register(AuditLogEntry)
+class ProjectAuditLogEntryAdmin(AuditLogEntryModelAdmin):
+    list_filter = AuditLogEntryModelAdmin.list_filter + (InvestigatorRoleFilter,)
+```
+
+---
+
 ## Diagrams
+
+> **Note:** These diagrams were created before the latest structured audit log changes.
+> They may not be 100% accurate for the current implementation. Until the diagrams
+> are updated, use the textual documentation in this README as the source of truth.
 
 ### Audit Flow
 ![Flow](https://github.com/Talismar/drf-audit-trail/blob/develop/docs/flow.png?raw=true)

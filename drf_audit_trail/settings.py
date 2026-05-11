@@ -1,6 +1,5 @@
 from django.conf import settings
 
-
 DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS = getattr(
     settings, "DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS", [r"^/api/.*?/"]
 )
@@ -13,7 +12,18 @@ DRF_AUDIT_TRAIL_DATABASE_ALIAS = getattr(
     settings, "DRF_AUDIT_TRAIL_DATABASE_ALIAS", "audit_trail"
 )
 DRF_AUDIT_TRAIL_USER_PK_NAME = getattr(settings, "DRF_AUDIT_TRAIL_USER_PK_NAME", "pk")
-DJANO_DEFAULT_DATABASE_ALIAS = getattr(
+DRF_AUDIT_TRAIL_USER_ROLE_GETTER = getattr(
+    settings,
+    "DRF_AUDIT_TRAIL_USER_ROLE_GETTER",
+    "drf_audit_trail.utils.get_user_role_by_django_groups",
+)
+DRF_AUDIT_TRAIL_DEFAULT_SYSTEM_ACTOR_IDENTIFIER = getattr(
+    settings, "DRF_AUDIT_TRAIL_DEFAULT_SYSTEM_ACTOR_IDENTIFIER", "system"
+)
+DRF_AUDIT_TRAIL_DEFAULT_SYSTEM_ACTOR_ROLE = getattr(
+    settings, "DRF_AUDIT_TRAIL_DEFAULT_SYSTEM_ACTOR_ROLE", "System"
+)
+DJANGO_DEFAULT_DATABASE_ALIAS = getattr(
     settings, "DJANGO_DEFAULT_DATABASE_ALIAS", "default"
 )
 DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS = getattr(
