@@ -3,22 +3,23 @@ import re
 from functools import lru_cache
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
-from rest_framework_simplejwt.tokens import AccessToken, TokenError
 from django.http import HttpRequest
+from rest_framework_simplejwt.tokens import AccessToken, TokenError
 
 from drf_audit_trail.settings import (
     DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS,
     DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS,
 )
-from .settings import DRF_AUDIT_TRAIL_USER_PK_NAME
 
-User = get_user_model()
+from .settings import DRF_AUDIT_TRAIL_USER_PK_NAME
 
 
 @lru_cache(maxsize=128)
 def get_user_by_pk_name(value: str | None):
     try:
+        User = get_user_model()
         filter_param = {DRF_AUDIT_TRAIL_USER_PK_NAME: value}
         user = User.objects.filter(**filter_param).first()
         if user is not None:
@@ -58,6 +59,7 @@ def get_user_by_raw_authorization_header(request):
         return None
 
     try:
+        User = get_user_model()
         raw_access_token = (
             authorization_header.split("Bearer ")[1]
             if "Bearer " in authorization_header
@@ -65,7 +67,7 @@ def get_user_by_raw_authorization_header(request):
         )
         access_token = AccessToken(raw_access_token)
         return User.objects.get(pk=access_token.get("user_id"))
-    except (TokenError, User.DoesNotExist, IndexError):
+    except (TokenError, ObjectDoesNotExist, IndexError):
         return None
 
 

@@ -205,6 +205,236 @@ record_system_event(
 
 If `actor_role` is not set in the decorator or draft, DRF Audit Trail calls `DRF_AUDIT_TRAIL_USER_ROLE_GETTER` to resolve it from the active user. The default getter uses the first Django group assigned to the user. You can configure a custom dotted path; the callable should accept `(user, request=None)`.
 
+### Optional Manager/QuerySet Audit
+
+For projects that prefer model-level auditing without decorating every view, use
+`AuditedManager`. This is independent from `@audit_log` and only affects models
+that use the audited manager.
+
+The public API is exposed from `drf_audit_trail.manager_audit`. Internally, this
+is organized as a package with separate modules for context handling, audited
+managers/models, audit planning, snapshots, and audit entry scheduling.
+
+```python
+from django.db import models
+from django.contrib import admin
+from drf_audit_trail.manager_audit import AuditedModel
+
+
+class Product(AuditedModel):
+    FIELD_UPDATE_ACTION_DESCRIPTIONS = {
+        "name": "Product name updated",
+        "price": "Product price updated",
+    }
+
+    name = models.CharField(max_length=255)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    pass
+```
+
+Configure global defaults and optional per-model overrides:
+
+```python
+DRF_AUDIT_TRAIL_MANAGER_AUDIT = {
+    "enabled": True,
+    "default_fields": "__all__",
+    "default_exclude_fields": ["created_at", "updated_at"],
+    "reason_for_change_key": "reason_for_change",
+    "default_reason": None,
+    "default_extra_informations_getter": None,
+    "default_value_serializer": "raw",  # raw | text | dotted.path.to.callable
+    "foreign_key_value_serializer": "repr",  # repr | pk | pk_and_repr
+    "file_value_serializer": "name",  # name | path | name_and_path
+    "image_value_serializer": "name",  # name | path | name_and_path
+    "field_value_serializers": {
+        # Optional global per-field override
+        # "quantity": "text",
+    },
+    "default_action_descriptions": {
+        "create": "Created object",
+        "update": "Updated object",
+        "delete": "Deleted object",
+    },
+    "models": {
+        "core.Product": {
+            "fields": ["name", "price"],
+            "require_reason": False,
+            "extra_informations_getter": None,
+            "field_value_serializers": {
+                # Optional model-specific field overrides
+                # "price": "text",
+            },
+            "action_descriptions": {
+                "update": "Updated product",
+            },
+        }
+    },
+}
+```
+
+Using `AuditedModel` or `AuditedManager` is the opt-in that enables model-level
+audit. The `models` setting is only needed for per-model overrides such as
+fields, descriptions, reason policy, serializers, or extra information getters.
+This feature does not install audit hooks on ordinary Django models.
+
+Models can define `FIELD_UPDATE_ACTION_DESCRIPTIONS` to customize update
+descriptions per changed field. Runtime
+`audit_model_context(action_description="...")` takes precedence;
+fields missing from the model dictionary fall back to configured
+`action_descriptions`.
+
+Use `default_extra_informations_getter` or a model-specific
+`extra_informations_getter` to populate filter metadata globally. This is useful
+for project-specific scopes such as `organization_id`, `sponsor_id`, `study_id`,
+or `site_id`.
+
+```python
+def audit_scope(*, instance, action, request=None, field_name=None, **kwargs):
+    return {
+        "organization_id": instance.organization_id,
+        "sponsor_id": instance.pk,
+        "action": action,
+        "field_name": field_name,
+    }
+```
+
+Getter values are merged with `audit_model_context(extra_informations={...})`
+when both are dictionaries. Context values win on duplicate keys.
+
+`old_values` and `new_values` for manager-level update events now store a single
+formatted value for the audited field (instead of a JSON object repeating the
+field name).
+
+Serializer selection priority for manager-level update values:
+
+1. `models["app.Model"]["field_value_serializers"][field]`
+2. global `field_value_serializers[field]`
+3. type-level serializer (`image` / `file` / `foreign_key`)
+4. `default_value_serializer`
+
+Built-in serializer names:
+
+- Generic: `raw`, `text`
+- Relation fields (`ForeignKey`, `OneToOneField`): `repr`, `pk`, `pk_and_repr`
+- File/Image fields: `name`, `path`, `name_and_path`
+
+Defaults in this library version:
+
+- `default_value_serializer = "raw"`
+- `foreign_key_value_serializer = "repr"`
+- `file_value_serializer = "name"`
+- `image_value_serializer = "name"`
+
+This means, by default:
+
+- regular scalar fields keep their native type in `old_values_data` /
+  `new_values_data` (example: `int`, `bool`, `dict`)
+- relations are stored as a user-friendly `repr` (instead of only PK)
+- files/images store filename/path value (`name`)
+
+Example with different models and field types:
+
+```python
+DRF_AUDIT_TRAIL_MANAGER_AUDIT = {
+    "enabled": True,
+    "default_fields": "__all__",
+
+    # Global defaults
+    "default_value_serializer": "raw",
+    "foreign_key_value_serializer": "repr",
+    "file_value_serializer": "name",
+    "image_value_serializer": "name_and_path",
+
+    # Optional global field-name overrides (applies to any model with this field name)
+    "field_value_serializers": {
+        "metadata": "text",  # force JSONField/dict to string
+    },
+
+    "models": {
+        "core.Product": {
+            "fields": ["name", "price", "category", "photo", "metadata"],
+            "field_value_serializers": {
+                "price": "text",          # Decimal as text
+                "category": "pk_and_repr", # include pk and repr for FK
+                "photo": "path",          # absolute/storage path for image
+            },
+        },
+        "core.Supplier": {
+            "fields": ["name", "contract_file"],
+            "file_value_serializer": "name_and_path",
+        },
+    },
+}
+```
+
+You can also provide a custom callable serializer (callable object or dotted
+path import string):
+
+```python
+"default_value_serializer": "my_project.audit.serializers.serialize_value"
+```
+
+Callable signature:
+
+```python
+def serialize_value(*, obj, field, raw_value):
+    return ...
+```
+
+The same custom serializer strategy can be used in:
+
+- `default_value_serializer`
+- `foreign_key_value_serializer`
+- `file_value_serializer`
+- `image_value_serializer`
+- `field_value_serializers`
+
+Use a context when a specific flow needs a custom reason, actor, descriptions, or
+field set:
+
+```python
+from drf_audit_trail.manager_audit import audit_model_context
+
+
+with audit_model_context(
+    request=request,
+    reason_for_change=request.data.get("reason_for_change"),
+    action_description="Updated consensus during review",
+    model=Product,
+    fields=["price"],
+):
+    Product.objects.filter(pk=product_id).update(price="12.00")
+```
+
+For create events, prefer object-level entries without `reason_for_change`;
+reserve reasons for updates, deletes, or custom actions where a change needs
+business justification.
+
+When no explicit reason is provided, manager-level audit reads the global
+`reason_for_change_key` from `request.data`, `request.POST`, or a JSON request
+body. The default key is `reason_for_change`. A string applies to every changed
+field; a dictionary maps `field_name` to a field-specific reason. This request
+fallback only applies to field-level update entries.
+
+`model` accepts a model class, model instance, queryset, manager, or model label.
+If the selected model has no configured `fields`, all concrete non-primary-key
+fields are tracked, except auto timestamp fields such as `created_at` and
+`updated_at`.
+
+`AuditedModel` captures `instance.save()` and `instance.delete()`, so Django
+Admin, forms, DRF serializers, and regular application code are covered when they
+mutate model instances. Its default manager also captures `create()`,
+`get_or_create()`, `update_or_create()`, queryset `update()`, queryset `delete()`,
+`bulk_create()`, and `bulk_update()`. It writes one object-level `AuditLogEntry`
+for create/delete events without `field_name`, `old_values`, or `new_values`, and
+one `AuditLogEntry` per changed field for update events, after
+`transaction.on_commit()`. Raw SQL and models that do not inherit the base class
+are intentionally outside this layer and can keep using `@audit_log`.
+
 ### Audit Log Admin Exports
 
 The Django admin changelist for `AuditLogEntry` includes CSV, XLS, and PDF export buttons. Exports use the currently filtered admin queryset and include who pulled the report, when it was pulled, and the filters applied.

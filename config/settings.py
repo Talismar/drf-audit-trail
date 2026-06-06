@@ -170,3 +170,9 @@ DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS = [
         "method": "POST",
     },
 ]
+
+DRF_AUDIT_TRAIL_MANAGER_AUDIT = {
+    "default_extra_informations_getter": (
+        "core.audit.get_global_audit_extra_informations"
+    ),
+}

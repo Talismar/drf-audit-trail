@@ -10,6 +10,7 @@ from drf_audit_trail.audit_log import (
     has_pending_audit_log_entries,
     persist_pending_audit_log_entries,
 )
+from drf_audit_trail.manager_audit import audit_model_context
 from drf_audit_trail.models import LoginAuditEvent, RequestAuditEvent
 from drf_audit_trail.settings import (
     DRF_AUDIT_TRAIL_AUTH_URL,
@@ -30,7 +31,8 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
     async def __acall__(self, request):
         request_audit_event_enabled = self._start_request(request)
 
-        response = await self.get_response(request)
+        with audit_model_context(request=request):
+            response = await self.get_response(request)
         if self._should_create_audit_instances(request, request_audit_event_enabled):
             await sync_to_async(self._create_instances, thread_sensitive=True)(
                 request, response
@@ -44,7 +46,8 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
         raw_body = request.body
         request._body = raw_body
 
-        response = self.get_response(request)
+        with audit_model_context(request=request):
+            response = self.get_response(request)
         if self._should_create_audit_instances(request, request_audit_event_enabled):
             self._create_instances(request, response)
 

@@ -32,3 +32,29 @@ DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS = getattr(
 DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS = getattr(
     settings, "DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS", []
 )
+DEFAULT_DRF_AUDIT_TRAIL_MANAGER_AUDIT = {
+    "enabled": True,
+    "excluded_apps": ["drf_audit_trail"],
+    "default_fields": "__all__",
+    "default_exclude_fields": ["created_at", "updated_at"],
+    "reason_for_change_key": "reason_for_change",
+    "default_reason": None,
+    "default_reason_getter": None,
+    "default_extra_informations_getter": None,
+    "default_value_serializer": "raw",
+    "foreign_key_value_serializer": "repr",
+    "file_value_serializer": "name",
+    "image_value_serializer": "name",
+    "field_value_serializers": {},
+    "default_action_descriptions": {
+        "create": "Created object",
+        "update": "Updated object",
+        "delete": "Deleted object",
+    },
+    "models": {},
+}
+DRF_AUDIT_TRAIL_MANAGER_AUDIT = getattr(
+    settings,
+    "DRF_AUDIT_TRAIL_MANAGER_AUDIT",
+    DEFAULT_DRF_AUDIT_TRAIL_MANAGER_AUDIT,
+)

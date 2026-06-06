@@ -1,8 +1,6 @@
 import json
 
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import generics
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
@@ -11,15 +9,54 @@ from rest_framework.serializers import ValidationError
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from core.api.serializers import ProductSerializer
-from core.models import Product
+from core.api.serializers import ProductSerializer, SupplierSerializer
+from core.models import Product, Supplier
 from core.process_audit import CreateProductProcessAudit, DeleteProductProcessAudit
-from drf_audit_trail.audit_log import audit_log
+from drf_audit_trail.manager_audit import audit_model_context
+
+
+def get_reason_for_change(request):
+    reason_for_change = None
+    try:
+        reason_for_change = request.data.get("reason_for_change")
+    except Exception:
+        reason_for_change = None
+
+    if reason_for_change is None:
+        reason_for_change = request.query_params.get("reason_for_change")
+
+    return reason_for_change
 
 
 class ProductViewSet(ModelViewSet):
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        with audit_model_context(
+            request=self.request,
+            action_description="Created product through API",
+            model=Product,
+        ):
+            serializer.save()
+
+    def perform_update(self, serializer):
+        with audit_model_context(
+            request=self.request,
+            action_description="Updated product through API",
+            model=Product,
+        ):
+            serializer.save()
+
+    def perform_destroy(self, instance):
+        with audit_model_context(
+            request=self.request,
+            action_description="Deleted product through API",
+            model=instance,
+            reason_for_change=get_reason_for_change(self.request),
+        ):
+            instance.delete()
 
     def create(self, request, *args, **kwargs):
         process_audit = CreateProductProcessAudit(request)
@@ -84,6 +121,63 @@ class ProductViewSet(ModelViewSet):
         return Response({"uidb64": uidb64, "token": token})
 
 
+class SupplierViewSet(ModelViewSet):
+    serializer_class = SupplierSerializer
+    queryset = Supplier.objects.all()
+    permission_classes = [AllowAny]
+
+    def perform_create(self, serializer):
+        with audit_model_context(
+            request=self.request,
+            action_description="Created supplier through API",
+            model=Supplier,
+        ):
+            serializer.save()
+
+    def perform_update(self, serializer):
+        with audit_model_context(
+            request=self.request,
+            action_description="Updated supplier through API",
+            model=Supplier,
+        ):
+            serializer.save()
+
+    def perform_destroy(self, instance):
+        with audit_model_context(
+            request=self.request,
+            action_description="Deleted supplier through API",
+            model=instance,
+            reason_for_change=get_reason_for_change(self.request),
+        ):
+            instance.delete()
+
+    @action(methods=["post"], detail=True, url_path="update-notes")
+    def update_notes(self, request, pk=None):
+        if "notes" not in request.data:
+            raise ValidationError({"notes": "This field is required."})
+
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance,
+            data={
+                "notes": request.data.get("notes"),
+                "reason_for_change": get_reason_for_change(request),
+            },
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+
+        with audit_model_context(
+            request=request,
+            action_description="Updated supplier notes",
+            model=instance,
+            fields=["notes"],
+        ):
+            serializer.save()
+
+        return Response(self.get_serializer(instance).data)
+
+
 class TestAPIView(APIView):
 
     def get(self, request: Request, *args, **kwargs):
@@ -98,190 +192,26 @@ class TestAPIView(APIView):
         return Response("Não foi possível criar", 400)
 
 
-class AuditLogProductViewSet(ModelViewSet):
-    serializer_class = ProductSerializer
-    queryset = Product.objects.all()
+class ProductPriceUpdateView(APIView):
     permission_classes = [AllowAny]
 
-    @audit_log(
-        event_type="Create",
-        action_description="Created product using ModelViewSet",
-        field_name="All fields",
-    )
-    def create(self, request, *args, audit_log, **kwargs):
-        response = super().create(request, *args, **kwargs)
-
-        if response.status_code == 201:
-            product = Product.objects.get(pk=response.data["id"])
-            audit_log.set_content_object(product)
-            audit_log.new_values = response.data
-            audit_log.extra_informations = {"view_type": "ModelViewSet"}
-
-        return response
-
-    @audit_log(
-        event_type="Update",
-        action_description="Updated product using ModelViewSet",
-        field_name="All fields",
-    )
-    def update(self, request, *args, audit_log, **kwargs):
-        instance = self.get_object()
-        old_values = {
-            "name": instance.name,
-            "code": instance.code,
-            "price": str(instance.price),
-            "quantity": instance.quantity,
-        }
-
-        response = super().update(request, *args, **kwargs)
-
-        instance.refresh_from_db()
-        new_values = {
-            "name": instance.name,
-            "code": instance.code,
-            "price": str(instance.price),
-            "quantity": instance.quantity,
-        }
-
-        audit_log.set_content_object(instance)
-        audit_log.old_values = old_values
-        audit_log.new_values = new_values
-        audit_log.reason_for_change = request.data.get(
-            "reason_for_change", "Product update through ModelViewSet"
-        )
-        audit_log.extra_informations = {"view_type": "ModelViewSet"}
-
-        return response
-
-
-class AuditLogProductGenericUpdateView(generics.UpdateAPIView):
-    serializer_class = ProductSerializer
-    queryset = Product.objects.all()
-    permission_classes = [AllowAny]
-
-    @audit_log(
-        event_type="Update",
-        action_description="Updated product using GenericAPIView",
-        field_name="price",
-    )
-    def patch(self, request, *args, audit_log, **kwargs):
-        instance = self.get_object()
-        old_price = instance.price
-
-        response = super().patch(request, *args, **kwargs)
-
-        instance.refresh_from_db()
-        audit_log.set_content_object(instance)
-        audit_log.old_values = {"price": str(old_price)}
-        audit_log.new_values = {"price": str(instance.price)}
-        audit_log.reason_for_change = request.data.get("reason_for_change")
-        audit_log.extra_informations = {"view_type": "GenericAPIView"}
-
-        return response
-
-
-class AuditLogProductAPIView(APIView):
-    permission_classes = [AllowAny]
-
-    @audit_log(
-        event_type="View",
-        action_description="Viewed product using APIView",
-    )
-    def get(self, request, pk, audit_log):
+    def patch(self, request, pk):
         product = get_object_or_404(Product, pk=pk)
-        audit_log.set_content_object(product)
-        audit_log.extra_informations = {
-            "view_type": "APIView",
-            "product_snapshot": ProductSerializer(product).data,
-        }
+        serializer = ProductSerializer(
+            product,
+            data={
+                "price": request.data.get("price"),
+            },
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+
+        with audit_model_context(
+            request=request,
+            action_description="Updated product price through API",
+            model=product,
+            fields=["price"],
+        ):
+            serializer.save()
 
         return Response(ProductSerializer(product).data)
-
-
-@audit_log(
-    event_type="View",
-    action_description="Viewed product using Django view",
-)
-def audit_log_product_django_view(request, pk, audit_log):
-    product = get_object_or_404(Product, pk=pk)
-    audit_log.set_content_object(product)
-    response_data = {
-        "id": product.pk,
-        "name": product.name,
-        "code": product.code,
-        "price": str(product.price),
-        "quantity": product.quantity,
-    }
-    audit_log.extra_informations = {
-        "view_type": "Django view",
-        "product_snapshot": response_data,
-    }
-
-    return JsonResponse(response_data)
-
-
-@audit_log(
-    event_type="View",
-    action_description="Viewed product using Django view with user role",
-)
-def audit_log_product_user_role_django_view(request, pk, audit_log):
-    product = get_object_or_404(Product, pk=pk)
-    audit_log.set_content_object(product)
-    response_data = {
-        "id": product.pk,
-        "name": product.name,
-        "code": product.code,
-    }
-    audit_log.extra_informations = {
-        "view_type": "Django view",
-        "role_source": "groups",
-        "product_snapshot": response_data,
-    }
-
-    return JsonResponse(response_data)
-
-
-class MultiAuditLogProductView(APIView):
-    """
-    - audit_log_view: registra o acesso (View) ao produto — acessível pelo
-      parâmetro `audit_log_view`.
-    - audit_log_price_update: registra a alteração de preço (Update) — acessível
-      pelo parâmetro `audit_log_price`.
-    """
-
-    permission_classes = [AllowAny]
-
-    @audit_log(
-        event_type="View",
-        action_description="Viewed product for price update preview",
-        parameter_name="audit_log_view",
-    )
-    @audit_log(
-        event_type="Update",
-        action_description="Updated product price",
-        field_name="price",
-        parameter_name="audit_log_price",
-    )
-    def patch(self, request, pk, audit_log_view, audit_log_price):
-        product = get_object_or_404(Product, pk=pk)
-        old_price = product.price
-
-        # enriquece o log de visualização
-        audit_log_view.set_content_object(product)
-        audit_log_view.extra_informations = {
-            "note": "snapshot before price update",
-            "product_snapshot": ProductSerializer(product).data,
-        }
-
-        # aplica a atualização de preço
-        new_price = request.data.get("price", old_price)
-        product.price = new_price
-        product.save(update_fields=["price"])
-
-        # enriquece o log de alteração
-        audit_log_price.set_content_object(product)
-        audit_log_price.old_values = {"price": str(old_price)}
-        audit_log_price.new_values = {"price": str(product.price)}
-        audit_log_price.reason_for_change = request.data.get("reason_for_change")
-
-        return Response({"id": product.pk, "price": str(product.price)})
