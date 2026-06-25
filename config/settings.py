@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "drf_audit_trail",
+    "drf_audit_trail.pg_audit_models",
 ]
 
 MIDDLEWARE = [
@@ -52,6 +53,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "drf_audit_trail.middleware.RequestLoginAuditEventMiddleware",
+    "drf_audit_trail.pg_audit_models.middleware.PGAuditModelsMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -80,8 +82,13 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": "drf_audit_trail",
+        "USER": "postgres",
+        "PASSWORD": "admin123",
+        "HOST": "localhost",
+        "PORT": 5432,
+        "ENGINE": "django.db.backends.postgresql",
+        "ATOMIC_REQUESTS": True,
     },
     "audit_trail": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -152,7 +159,7 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": False,
     "SIGNING_KEY": "F7zbUkdlHIGsWmTxA2wq7uasRN5uZ159SFyCCe0wKvU31dmThvFo8tmJF4RJ1QTjp",
-    "AUTH_HEADER_TYPES": ("Bearer","Token"),
+    "AUTH_HEADER_TYPES": ("Bearer", "Token"),
 }
 
 
@@ -175,4 +182,9 @@ DRF_AUDIT_TRAIL_MANAGER_AUDIT = {
     "default_extra_informations_getter": (
         "core.audit.get_global_audit_extra_informations"
     ),
+}
+
+DRF_AUDIT_TRAIL_PG_AUDIT = {
+    "models": ("auth.User", "auth.Group", "core.Category"),
+    "api_views_module_suffixes": ["views", "api.views"],
 }

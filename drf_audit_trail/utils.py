@@ -9,6 +9,7 @@ from django.http import HttpRequest
 from rest_framework_simplejwt.tokens import AccessToken, TokenError
 
 from drf_audit_trail.settings import (
+    DRF_AUDIT_TRAIL_DEFAULT_SYSTEM_ACTOR_ROLE,
     DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS,
     DRF_AUDIT_TRAIL_NOTSAVE_RESPONSE_BODY_URLS,
 )
@@ -93,6 +94,30 @@ def get_user_role_by_django_groups(user, request=None):
     if group is None:
         return None
     return group.name
+
+
+def get_global_audit_actor_role(
+    *,
+    request=None,
+    user=None,
+    actor_type=None,
+    model=None,
+    ref_name=None,
+    ref_id=None,
+    **kwargs,
+):
+    if actor_type == "System":
+        return DRF_AUDIT_TRAIL_DEFAULT_SYSTEM_ACTOR_ROLE
+
+    authenticated_user = user or get_authenticated_user_by_request(request)
+    if authenticated_user is None:
+        return "Anonymous"
+
+    role = get_user_role_by_django_groups(authenticated_user, request=request)
+    if role is not None:
+        return role
+
+    return "No Role"
 
 
 def is_json(data):

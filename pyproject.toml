@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "drf-audit-trail"
-version = "0.4.9"
+version = "0.5.2"
 description = "A reusable django [DRF] application that handles auditing of requests, logins and process"
 authors = ["Talismar Fernandes Costa <talismar788.una@gmail.com>"]
 readme = "README.md"
@@ -19,6 +19,7 @@ ipython = "^8.24.0"
 black = "^24.8.0"
 flake8 = "^7.1.1"
 uvicorn = "^0.30.6"
+psycopg2-binary = "^2.9.12"
 
 [build-system]
 requires = ["poetry-core"]

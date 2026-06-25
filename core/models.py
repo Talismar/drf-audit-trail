@@ -3,6 +3,14 @@ from django.db import models
 from drf_audit_trail.manager_audit import AuditedModel
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+
+    def __str__(self) -> str:
+        return "%i | %s" % (self.pk, self.name)
+
+
 class Product(AuditedModel):
 
     FIELD_UPDATE_ACTION_DESCRIPTIONS = {

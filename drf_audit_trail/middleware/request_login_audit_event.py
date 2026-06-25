@@ -2,7 +2,6 @@ import re
 from time import time
 from traceback import format_exc as traceback_format_exc
 
-from asgiref.sync import sync_to_async
 from django.http import HttpRequest
 from django.utils.deprecation import MiddlewareMixin
 
@@ -27,18 +26,6 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
         request.META["drf_audit_trail_request_start_time"] = time()
 
         return request_audit_event_enabled
-
-    async def __acall__(self, request):
-        request_audit_event_enabled = self._start_request(request)
-
-        with audit_model_context(request=request):
-            response = await self.get_response(request)
-        if self._should_create_audit_instances(request, request_audit_event_enabled):
-            await sync_to_async(self._create_instances, thread_sensitive=True)(
-                request, response
-            )
-
-        return response
 
     def process_request(self, request: HttpRequest):
         request_audit_event_enabled = self._start_request(request)

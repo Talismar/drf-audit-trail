@@ -262,13 +262,38 @@ def schedule_drafts(drafts, audit_plan, using):
 
         with disable_manager_audit():
             for draft in drafts:
-                create_audit_log_entry(
-                    draft,
-                    request_audit_event=request_audit_event,
-                    request=request,
-                )
+                try:
+                    create_audit_log_entry(
+                        draft,
+                        request_audit_event=request_audit_event,
+                        request=request,
+                    )
+                except Exception as exc:
+                    # During migrations (including test DB setup), on_commit hooks can
+                    # run before the audit table exists. Skip only this case.
+                    if not _is_missing_audit_table_error(exc):
+                        raise
 
     transaction.on_commit(persist_or_enqueue_entries, using=using)
+
+
+def _is_missing_audit_table_error(exc):
+    current = exc
+    while current is not None:
+        message = str(current).lower()
+        if (
+            "drf_audit_trail_auditlogentry" in message
+            and ("does not exist" in message or "undefinedtable" in message)
+        ):
+            return True
+
+        current = getattr(current, "__cause__", None) or getattr(
+            current,
+            "__context__",
+            None,
+        )
+
+    return False
 
 
 class PendingAuditDrafts:

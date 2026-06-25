@@ -58,3 +58,30 @@ DRF_AUDIT_TRAIL_MANAGER_AUDIT = getattr(
     "DRF_AUDIT_TRAIL_MANAGER_AUDIT",
     DEFAULT_DRF_AUDIT_TRAIL_MANAGER_AUDIT,
 )
+DEFAULT_DRF_AUDIT_TRAIL_PG_AUDIT = {
+    "audit_all_models": False,
+    "models": None,
+    "excluded_models": [],
+    "api_views_modules": [],
+    "api_views_module_suffixes": ["views", "api.views"],
+    "api_views_actions": [
+        "list",
+        "create",
+        "retrieve",
+        "update",
+        "partial_update",
+        "destroy",
+    ],
+    "api_views_methods": ["get", "post", "put", "patch", "delete"],
+    "django_views_modules": [],
+    "django_views_module_suffixes": ["views"],
+    "django_views_methods": ["get", "post", "put", "patch", "delete"],
+    "reason_for_change_key": "reason_for_change",
+    "default_extra_informations_getter": None,
+    "default_actor_role_getter": "drf_audit_trail.utils.get_global_audit_actor_role",
+}
+DRF_AUDIT_TRAIL_PG_AUDIT = getattr(
+    settings,
+    "DRF_AUDIT_TRAIL_PG_AUDIT",
+    DEFAULT_DRF_AUDIT_TRAIL_PG_AUDIT,
+)

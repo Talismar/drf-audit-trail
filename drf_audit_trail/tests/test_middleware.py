@@ -6,13 +6,13 @@ class MiddlewareTestCase(TestCase):
 
     def _get_client_with_login(self):
         user_data = {"username": "talismar", "password": "admin"}
-        User.objects.create_user(**user_data)
+        user = User.objects.create_user(**user_data)
 
         client = Client()
         response = client.post("/api/token/", data=user_data)
         token = response.json()["access"]
 
-        return Client(HTTP_Authorization="Bearer " + token)
+        return Client(HTTP_Authorization="Bearer " + token), user
 
     def test_should_store_a_login_audit_event_for_auth_request(self):
         User.objects.create_user(username="talismar", password="admin")
@@ -58,7 +58,7 @@ class MiddlewareTestCase(TestCase):
     def test_should_store_the_request_user_for_protected_endpoint_or_when_user_is_authenticated(
         self,
     ):
-        client = self._get_client_with_login()
+        client, user = self._get_client_with_login()
 
         response = client.get("/api/protected-endpoint/")
 
@@ -67,7 +67,7 @@ class MiddlewareTestCase(TestCase):
         ).first()
 
         self.assertIsNotNone(request_audit_event.user)
-        self.assertEqual(request_audit_event.user, "1")
+        self.assertEqual(request_audit_event.user, str(user.pk))
         self.assertEqual(response.status_code, request_audit_event.status_code)
 
     def test_url_and_query_params_are_truncated(self):
@@ -94,5 +94,3 @@ class MiddlewareTestCase(TestCase):
         log_output = stream.getvalue()
         logger.removeHandler(handler)
         self.assertIn("Truncating value for field", log_output)
-
-

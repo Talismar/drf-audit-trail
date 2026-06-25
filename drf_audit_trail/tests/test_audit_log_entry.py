@@ -1,4 +1,5 @@
 from .support import *
+from drf_audit_trail.utils import get_global_audit_actor_role
 
 
 class AuditLogEntryTestCase(TestCase):
@@ -256,3 +257,33 @@ class AuditLogEntryTestCase(TestCase):
         self.assertEqual(entry.actor_identifier, str(user.pk))
         self.assertEqual(entry.actor_role, "custom:custom-role-user")
 
+    def test_global_actor_role_getter_should_use_first_group_for_authenticated_user(self):
+        user = User.objects.create_user(username="audit-user", password="admin")
+        first_group = Group.objects.create(name="Investigator")
+        second_group = Group.objects.create(name="Sponsor")
+        user.groups.add(first_group, second_group)
+
+        request = self.request_factory.get("/api/product/")
+        request.user = user
+
+        self.assertEqual(
+            get_global_audit_actor_role(request=request, user=user),
+            "Investigator",
+        )
+
+    def test_global_actor_role_getter_should_return_anonymous_for_unauthenticated_user(
+        self,
+    ):
+        request = self.request_factory.get("/api/product/")
+        request.user = AnonymousUser()
+
+        self.assertEqual(
+            get_global_audit_actor_role(request=request),
+            "Anonymous",
+        )
+
+    def test_global_actor_role_getter_should_return_system_role_for_system_actor(self):
+        self.assertEqual(
+            get_global_audit_actor_role(actor_type="System"),
+            "System",
+        )
