@@ -4,7 +4,8 @@ from . import audit
 
 
 class PGAuditModelsMiddleware(MiddlewareMixin):
-    def process_request(self, request):
+    async_capable = False
+
+    def process_response(self, request, response):
         with audit(request=request):
-            response = self.get_response(request)
-        return response
+            return response

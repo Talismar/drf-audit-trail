@@ -18,6 +18,8 @@ from drf_audit_trail.settings import (
 
 
 class RequestLoginAuditEventMiddleware(MiddlewareMixin):
+    async_capable = False
+
     def _start_request(self, request):
         request_audit_event_enabled = self._is_request_audit_enabled(request)
 

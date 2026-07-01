@@ -103,6 +103,14 @@ class DiffLog(ProtectedModelMixin, models.Model):
         )
 
     @property
+    def action_description(self):
+        if self.event_type == "UPDATE":
+            return f"Updated ({self.field_verbose_name})"
+        if self.event_type == "INSERT":
+            return f"Created new ({self.model_verbose_name})"
+        return f"Deleted ({self.model_verbose_name})"
+
+    @property
     def field_verbose_name(self):
         return self.get_field_name()
 
