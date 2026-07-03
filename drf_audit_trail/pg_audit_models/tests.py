@@ -630,7 +630,7 @@ class PGAuditModelsActionLogAdminExportTests(TestCase):
         self.assertIn("New description", content)
         self.assertNotIn("tests.system_task", content)
 
-    @patch("drf_audit_trail.admin_reports.HTML")
+    @patch("drf_audit_trail.report_export.HTML")
     def test_pdf_export_should_reuse_audit_report_template(self, html_mock):
         html_mock.return_value.write_pdf.return_value = b"%PDF-1.4"
 

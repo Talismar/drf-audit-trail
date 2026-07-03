@@ -818,6 +818,18 @@ include a UTF-8 BOM for Excel compatibility. XLS exports render the shared HTML
 table template as `.xls`, and PDF exports render the shared PDF template through
 WeasyPrint.
 
+### Reusable Report Export Classes
+
+Projects that need report exports outside the Django admin can reuse
+`AuditLogReportExporter` and `AuditLogReportExportActionMixin`. The exporter
+contains the shared CSV, XLS, and PDF rendering flow. The mixin can be added to
+a DRF viewset by setting `report_exporter_class`; it applies the viewset's
+`filter_queryset()` pipeline before generating the report.
+
+The package does not register an API route for this integration. The consuming
+project is responsible for adding the mixin to its viewset and defining its URL,
+queryset, filters, authentication, and permissions.
+
 Filters that depend on the consuming application's domain, such as Sponsor, Study, Site, Subject, or Investigator, should be implemented by that application. DRF Audit Trail keeps the reusable model generic and does not add project-specific fields such as `sponsor`, `study`, or `site`.
 
 ### Customizing Audit Log Admin Filters

@@ -89,7 +89,7 @@ class AuditLogEntryAdminExportTestCase(TestCase):
         self.assertNotIn("&quot;price&quot;", content)
         self.assertNotIn("Auto-save product", content)
 
-    @patch("drf_audit_trail.admin_reports.HTML")
+    @patch("drf_audit_trail.report_export.HTML")
     def test_pdf_export_should_render_report_pdf(self, html_mock):
         html_mock.return_value.write_pdf.return_value = b"%PDF-1.4"
 
