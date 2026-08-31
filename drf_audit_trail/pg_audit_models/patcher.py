@@ -19,7 +19,6 @@ def decorate_method(cls, name, callback=None):
     source = f"{cls.__module__}.{cls.__name__.lower()}.{name}"
     # Avoid double patching
     if not getattr(func, "_audit_patched", False):
-        print(f"Patching action method {cls.__name__}.{name}...")
         wrapped = audit(source=source, callback=callback)(func)
         wrapped._audit_patched = True
         setattr(cls, name, wrapped)
