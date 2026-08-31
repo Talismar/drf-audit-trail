@@ -20,6 +20,7 @@ black = "^24.8.0"
 flake8 = "^7.1.1"
 uvicorn = "^0.30.6"
 psycopg2-binary = "^2.9.12"
+django-environ = "^0.14.0"
 
 [build-system]
 requires = ["poetry-core"]

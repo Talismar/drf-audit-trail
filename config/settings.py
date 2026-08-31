@@ -10,11 +10,17 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+import environ
+
+env = environ.Env()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
@@ -81,20 +87,14 @@ WSGI_APPLICATION = "config.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "NAME": "drf_audit_trail",
-        "USER": "postgres",
-        "PASSWORD": "admin123",
-        "HOST": "localhost",
-        "PORT": 5432,
-        "ENGINE": "django.db.backends.postgresql",
-        "ATOMIC_REQUESTS": True,
-    },
-    "audit_trail": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "audit_trail.sqlite3",
-    },
+    "default": env.db("DATABASE_URL"),
+    # "audit_trail": {
+    #     "ENGINE": "django.db.backends.sqlite3",
+    #     "NAME": BASE_DIR / "audit_trail.sqlite3",
+    # },
+    "audit_trail": env.db("AUDIT_TRAIL_DATABASE_URL"),
 }
+DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
 DATABASE_ROUTERS = ["drf_audit_trail.database_router.DRFAuditTrail"]
 
