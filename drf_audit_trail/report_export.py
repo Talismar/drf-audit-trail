@@ -178,7 +178,7 @@ class AuditLogReportExporter:
         return response
 
     def render_xls_export(self, context):
-        template = get_template("admin/drf_audit_trail/auditlogentry/report_xls.html")
+        template = get_template("admin/drf_audit_trail/audit_log_report/report_xls.html")
         response = HttpResponse(
             template.render(context),
             content_type="application/vnd.ms-excel; charset=utf-8",
@@ -189,7 +189,7 @@ class AuditLogReportExporter:
         return response
 
     def render_pdf_export(self, context):
-        template = get_template("admin/drf_audit_trail/auditlogentry/report_pdf.html")
+        template = get_template("admin/drf_audit_trail/audit_log_report/report_pdf.html")
         html_content = template.render(context)
         pdf_file = HTML(string=html_content).write_pdf()
 

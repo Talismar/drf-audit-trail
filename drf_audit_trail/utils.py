@@ -4,7 +4,6 @@ from functools import lru_cache
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.serializers.json import DjangoJSONEncoder
 from django.http import HttpRequest
 from rest_framework_simplejwt.tokens import AccessToken, TokenError
 
@@ -140,19 +139,6 @@ def get_extra_informations(drf_request_audit_event: dict | None):
         return json.dumps(extra_informations)
     except Exception:
         return None
-
-
-def serialize_audit_value(value):
-    if value is None:
-        return None
-
-    if isinstance(value, str) and is_json(value):
-        return value
-
-    try:
-        return json.dumps(value, cls=DjangoJSONEncoder, ensure_ascii=False)
-    except TypeError:
-        return json.dumps(str(value), ensure_ascii=False)
 
 
 def deserialize_audit_value(value):

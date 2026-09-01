@@ -5,7 +5,7 @@ from .report_export import AuditLogReportExporter, get_applied_filters_from_requ
 
 
 class AuditLogReportExportMixin:
-    change_list_template = "admin/drf_audit_trail/auditlogentry/change_list.html"
+    change_list_template = "admin/drf_audit_trail/audit_log_report/change_list.html"
     report_title = "Audit Log Report"
     report_filename = "audit_log_report"
     report_columns = (
