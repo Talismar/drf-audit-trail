@@ -55,7 +55,8 @@ class RequestAuditEventManager(Manager):
 
         if process_audit_event is not None and instance is not None:
             try:
-                instance.processes.add(process_audit_event)
+                with transaction.atomic():
+                    instance.processes.add(process_audit_event)
             except BaseException:
                 pass
 

@@ -10,9 +10,6 @@ from drf_audit_trail.readonly_triggers import (
 AUDIT_MODEL_NAMES = (
     "LoginAuditEvent",
     "RequestAuditEvent",
-    "ProcessAuditEvent",
-    "RegistrationAuditEvent",
-    "StepAuditEvent",
 )
 AUDIT_MODEL_SPECS = tuple(
     ("drf_audit_trail", model_name) for model_name in AUDIT_MODEL_NAMES

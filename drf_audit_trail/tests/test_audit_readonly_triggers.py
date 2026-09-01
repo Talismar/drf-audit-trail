@@ -18,18 +18,6 @@ EXPECTED_READONLY_TRIGGERS = {
         "trg_requestauditevent_no_delete",
         "trg_requestauditevent_no_update",
     },
-    "drf_audit_trail_processauditevent": {
-        "trg_processauditevent_no_delete",
-        "trg_processauditevent_no_update",
-    },
-    "drf_audit_trail_registrationauditevent": {
-        "trg_registrationauditevent_no_delete",
-        "trg_registrationauditevent_no_update",
-    },
-    "drf_audit_trail_stepauditevent": {
-        "trg_stepauditevent_no_delete",
-        "trg_stepauditevent_no_update",
-    },
     "pg_audit_models_actionlog": {
         "trg_actionlog_no_delete",
         "trg_actionlog_no_update",
