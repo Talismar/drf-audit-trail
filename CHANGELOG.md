@@ -1,12 +1,16 @@
 # Changelog
 
-## Unreleased
+## 0.5.8
 
-### Added
-- Added `AuditLogEntry` for structured audit log rows tied optionally to `RequestAuditEvent`.
-- Added `audit_log` decorator for views and `record_system_event` for request-less system actions.
-- Added text-based JSON serialization for `old_values`, `new_values`, and `extra_informations`.
-- Added configurable active user role resolution for `AuditLogEntry.actor_role`.
+### Fixed
+- Removed `ProcessAuditEvent`, `RegistrationAuditEvent` and `StepAuditEvent` from the 0.5.7 read-only DB triggers. Only `LoginAuditEvent` and `RequestAuditEvent` (plus `pg_audit_models.ActionLog`/`DiffLog`) are the actual audit log and need DB-enforced immutability; the process/step/registration tables are process bookkeeping. Keeping the trigger on `ProcessAuditEvent` in particular blocked the internal `UPDATE` that `RequestAuditEventManager.create_by_request` performs to link a process to its request (via `RequestAuditEvent.processes.add(...)`). That `UPDATE` was always issued through Django's bulk related-manager path, bypassing the `ProtectedModelMixin` Python guard, and was being silently swallowed by a bare `except BaseException: pass` — except that in PostgreSQL a failed statement aborts the whole transaction, so every subsequent query in that request/test transaction failed with `TransactionManagementError`.
+- Wrapped the process-linking call in `RequestAuditEventManager.create_by_request` in its own savepoint (`transaction.atomic()`) so a failure there can never poison the caller's outer transaction again.
+
+## 0.6.0
+
+### Removed
+- **Breaking:** Removed the `AuditLogEntry` model and its migration (`0006_delete_auditlogentry`). The `@audit_log` decorator, `record_system_event`, and the `drf_audit_trail.manager_audit` package (`AuditedModel`, `AuditedManager`, `AuditedQuerySet`, `audit_model_context`, `disable_manager_audit`, `set_audit_reason`) are removed along with it, since they existed only to populate that model. `DRF_AUDIT_TRAIL_MANAGER_AUDIT` and `DRF_AUDIT_TRAIL_USER_ROLE_GETTER` settings no longer have any effect.
+- Object/field-level audit tracking is now handled exclusively by `drf_audit_trail.pg_audit_models` (PostgreSQL trigger-based `ActionLog`/`DiffLog`). Projects that relied on `AuditLogEntry` should migrate to that app.
 
 ## 0.3.9 - 2025-10-01
 

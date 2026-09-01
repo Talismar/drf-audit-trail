@@ -12,51 +12,12 @@ from rest_framework.viewsets import ModelViewSet
 from core.api.serializers import ProductSerializer, SupplierSerializer
 from core.models import Product, Supplier
 from core.process_audit import CreateProductProcessAudit, DeleteProductProcessAudit
-from drf_audit_trail.manager_audit import audit_model_context
-
-
-def get_reason_for_change(request):
-    reason_for_change = None
-    try:
-        reason_for_change = request.data.get("reason_for_change")
-    except Exception:
-        reason_for_change = None
-
-    if reason_for_change is None:
-        reason_for_change = request.query_params.get("reason_for_change")
-
-    return reason_for_change
 
 
 class ProductViewSet(ModelViewSet):
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
     permission_classes = [AllowAny]
-
-    def perform_create(self, serializer):
-        with audit_model_context(
-            request=self.request,
-            action_description="Created product through API",
-            model=Product,
-        ):
-            serializer.save()
-
-    def perform_update(self, serializer):
-        with audit_model_context(
-            request=self.request,
-            action_description="Updated product through API",
-            model=Product,
-        ):
-            serializer.save()
-
-    def perform_destroy(self, instance):
-        with audit_model_context(
-            request=self.request,
-            action_description="Deleted product through API",
-            model=instance,
-            reason_for_change=get_reason_for_change(self.request),
-        ):
-            instance.delete()
 
     def create(self, request, *args, **kwargs):
         process_audit = CreateProductProcessAudit(request)
@@ -126,31 +87,6 @@ class SupplierViewSet(ModelViewSet):
     queryset = Supplier.objects.all()
     permission_classes = [AllowAny]
 
-    def perform_create(self, serializer):
-        with audit_model_context(
-            request=self.request,
-            action_description="Created supplier through API",
-            model=Supplier,
-        ):
-            serializer.save()
-
-    def perform_update(self, serializer):
-        with audit_model_context(
-            request=self.request,
-            action_description="Updated supplier through API",
-            model=Supplier,
-        ):
-            serializer.save()
-
-    def perform_destroy(self, instance):
-        with audit_model_context(
-            request=self.request,
-            action_description="Deleted supplier through API",
-            model=instance,
-            reason_for_change=get_reason_for_change(self.request),
-        ):
-            instance.delete()
-
     @action(methods=["post"], detail=True, url_path="update-notes")
     def update_notes(self, request, pk=None):
         if "notes" not in request.data:
@@ -159,21 +95,11 @@ class SupplierViewSet(ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(
             instance,
-            data={
-                "notes": request.data.get("notes"),
-                "reason_for_change": get_reason_for_change(request),
-            },
+            data={"notes": request.data.get("notes")},
             partial=True,
         )
         serializer.is_valid(raise_exception=True)
-
-        with audit_model_context(
-            request=request,
-            action_description="Updated supplier notes",
-            model=instance,
-            fields=["notes"],
-        ):
-            serializer.save()
+        serializer.save()
 
         return Response(self.get_serializer(instance).data)
 
@@ -205,13 +131,6 @@ class ProductPriceUpdateView(APIView):
             partial=True,
         )
         serializer.is_valid(raise_exception=True)
-
-        with audit_model_context(
-            request=request,
-            action_description="Updated product price through API",
-            model=product,
-            fields=["price"],
-        ):
-            serializer.save()
+        serializer.save()
 
         return Response(ProductSerializer(product).data)

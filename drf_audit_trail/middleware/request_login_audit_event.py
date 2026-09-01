@@ -5,11 +5,6 @@ from traceback import format_exc as traceback_format_exc
 from django.http import HttpRequest
 from django.utils.deprecation import MiddlewareMixin
 
-from drf_audit_trail.audit_log import (
-    has_pending_audit_log_entries,
-    persist_pending_audit_log_entries,
-)
-from drf_audit_trail.manager_audit import audit_model_context
 from drf_audit_trail.models import LoginAuditEvent, RequestAuditEvent
 from drf_audit_trail.settings import (
     DRF_AUDIT_TRAIL_AUTH_URL,
@@ -35,9 +30,8 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
         raw_body = request.body
         request._body = raw_body
 
-        with audit_model_context(request=request):
-            response = self.get_response(request)
-        if self._should_create_audit_instances(request, request_audit_event_enabled):
+        response = self.get_response(request)
+        if request_audit_event_enabled:
             self._create_instances(request, response)
 
         return response
@@ -64,13 +58,7 @@ class RequestLoginAuditEventMiddleware(MiddlewareMixin):
                 request, response, request_audit_event
             )
 
-        if isinstance(request_audit_event, RequestAuditEvent):
-            persist_pending_audit_log_entries(request, request_audit_event)
-
         return response
-
-    def _should_create_audit_instances(self, request, request_audit_event_enabled):
-        return request_audit_event_enabled or has_pending_audit_log_entries(request)
 
     def _is_request_audit_enabled(self, request):
         for i in DRF_AUDIT_TRAIL_REQUEST_AUDIT_URLS:

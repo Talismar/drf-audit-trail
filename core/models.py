@@ -1,7 +1,5 @@
 from django.db import models
 
-from drf_audit_trail.manager_audit import AuditedModel
-
 
 class Category(models.Model):
     name = models.CharField(max_length=255)
@@ -11,15 +9,7 @@ class Category(models.Model):
         return "%i | %s" % (self.pk, self.name)
 
 
-class Product(AuditedModel):
-
-    FIELD_UPDATE_ACTION_DESCRIPTIONS = {
-        "name": "Product name updated",
-        "code": "Product code updated",
-        "price": "Product price updated",
-        "quantity": "Product quantity updated",
-    }
-
+class Product(models.Model):
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=255, unique=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -31,7 +21,7 @@ class Product(AuditedModel):
         return "%i | %s" % (self.pk, self.name)
 
 
-class Supplier(AuditedModel):
+class Supplier(models.Model):
     name = models.CharField(max_length=255)
     contact_email = models.EmailField(max_length=255)
     phone = models.CharField(max_length=50, blank=True)

@@ -2,9 +2,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import path, reverse
 
-from .admin_reports import AuditLogReportExportMixin
 from .models import (
-    AuditLogEntry,
     LoginAuditEvent,
     ProcessAuditEvent,
     RegistrationAuditEvent,
@@ -44,65 +42,6 @@ class RequestAuditEventModelAdmin(ReadonlyAdminMixin, admin.ModelAdmin):
 
 
 admin.site.register(RequestAuditEvent, RequestAuditEventModelAdmin)
-
-
-class AuditLogEntryModelAdmin(
-    AuditLogReportExportMixin, ReadonlyAdminMixin, admin.ModelAdmin
-):
-    list_display = (
-        "id",
-        "event_type",
-        "_actor_identifier",
-        "actor_type",
-        "field_name",
-        "content_type",
-        "object_id",
-        "request",
-        "datetime",
-    )
-    list_filter = ("event_type", "actor_type", "content_type")
-    search_fields = (
-        "event_type",
-        "action_description",
-        "actor_role",
-        "content_type",
-        "object_id",
-        "object_repr",
-        "field_name",
-        "reason_for_change",
-    )
-    report_select_related = ("request",)
-
-    def _actor_identifier(self, obj: AuditLogEntry):
-        return get_user_by_pk_name(obj.actor_identifier)
-
-    def get_report_row(self, entry: AuditLogEntry):
-        return (
-            self.format_report_value(entry.datetime),
-            self.format_report_value(get_user_by_pk_name(entry.actor_identifier)),
-            self.format_report_value(entry.actor_role),
-            self.format_report_value(entry.event_type),
-            self.format_report_value(entry.action_description),
-            self.format_report_value(
-                entry.object_repr or self.get_object_reference(entry)
-            ),
-            self.format_report_value(entry.field_name),
-            self.format_audit_values(entry.old_values),
-            self.format_audit_values(entry.new_values),
-            self.format_report_value(entry.reason_for_change),
-            self.format_report_value(entry.actor_type),
-            self.format_report_value(
-                entry.request.ip_addresses if entry.request is not None else None
-            ),
-        )
-
-    def get_object_reference(self, entry: AuditLogEntry):
-        if entry.content_type and entry.object_id:
-            return f"{entry.content_type}:{entry.object_id}"
-        return None
-
-
-admin.site.register(AuditLogEntry, AuditLogEntryModelAdmin)
 
 
 class LoginAuditEventModelAdmin(ReadonlyAdminMixin, admin.ModelAdmin):

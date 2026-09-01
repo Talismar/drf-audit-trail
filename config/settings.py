@@ -178,13 +178,7 @@ DRF_AUDIT_TRAIL_NOTSAVE_REQUEST_BODY_URLS = [
     },
 ]
 
-DRF_AUDIT_TRAIL_MANAGER_AUDIT = {
-    "default_extra_informations_getter": (
-        "core.audit.get_global_audit_extra_informations"
-    ),
-}
-
 DRF_AUDIT_TRAIL_PG_AUDIT = {
-    "models": ("auth.User", "auth.Group", "core.Category"),
+    "models": ("auth.User", "auth.Group", "core.Category", "core.Product", "core.Supplier"),
     "api_views_module_suffixes": ["views", "api.views"],
 }
