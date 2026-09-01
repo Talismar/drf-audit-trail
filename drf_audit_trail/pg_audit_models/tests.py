@@ -1034,19 +1034,11 @@ class PGAuditModelsPostgreSQLTriggerTests(TransactionTestCase):
             self.drop_table(cursor, self.uuid_table_name)
             self.drop_table(cursor, self.stale_table_name)
 
-        ActionLog.objects.filter(
-            ref_name__in=[self.uuid_table_name, self.stale_table_name]
-        ).delete()
-
     def tearDown(self):
         _startup_synced_database_aliases.clear()
         with connection.cursor() as cursor:
             self.drop_table(cursor, self.uuid_table_name)
             self.drop_table(cursor, self.stale_table_name)
-
-        ActionLog.objects.filter(
-            ref_name__in=[self.uuid_table_name, self.stale_table_name]
-        ).delete()
 
     def drop_table(self, cursor, table_name):
         cursor.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")

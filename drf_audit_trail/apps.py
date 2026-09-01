@@ -6,3 +6,6 @@ class DrfAuditTrailConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "drf_audit_trail"
     verbose_name = _("DRF Audit Trail")
+
+    def ready(self):
+        from . import signals  # noqa: F401

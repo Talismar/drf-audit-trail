@@ -10,6 +10,12 @@ from django.db.utils import DatabaseError
 from django.dispatch import receiver
 from django.utils.connection import ConnectionDoesNotExist
 
+from drf_audit_trail.readonly_triggers import (
+    get_model_table_names,
+    sync_readonly_triggers,
+)
+from drf_audit_trail.settings import DJANGO_DEFAULT_DATABASE_ALIAS
+
 from .config import get_audited_model_tables, get_pg_audit_config
 
 logger = logging.getLogger(__name__)
@@ -82,6 +88,15 @@ $$;
 
 _configured_database_aliases = set()
 _startup_synced_database_aliases = set()
+_readonly_configured_database_aliases = set()
+
+READONLY_AUDIT_MODEL_NAMES = (
+    "ActionLog",
+    "DiffLog",
+)
+READONLY_AUDIT_MODEL_SPECS = tuple(
+    ("pg_audit_models", model_name) for model_name in READONLY_AUDIT_MODEL_NAMES
+)
 
 
 def should_sync_pg_audit_triggers_on_start(argv=None):
@@ -238,6 +253,21 @@ def quote_sql_literal(cursor, value):
     return "'%s'" % str(value).replace("'", "''")
 
 
+def sync_pg_audit_readonly_triggers(using=DEFAULT_DB_ALIAS):
+    if using != DJANGO_DEFAULT_DATABASE_ALIAS:
+        return None
+
+    return sync_readonly_triggers(
+        READONLY_AUDIT_MODEL_SPECS,
+        using=using,
+        log_scope="pg_audit_models",
+    )
+
+
+def get_pg_audit_readonly_model_table_names():
+    return get_model_table_names(READONLY_AUDIT_MODEL_SPECS)
+
+
 @receiver(post_migrate)
 def run_custom_post_migrate_hook(sender, *args, **kwargs):
     using = kwargs.get("using") or DEFAULT_DB_ALIAS
@@ -253,3 +283,14 @@ def run_custom_post_migrate_hook(sender, *args, **kwargs):
 
     sync_pg_audit_triggers(using=using, config=get_pg_audit_config())
     _configured_database_aliases.add(using)
+
+
+@receiver(post_migrate)
+def run_pg_audit_readonly_triggers_sync(sender, *args, **kwargs):
+    using = kwargs.get("using") or DEFAULT_DB_ALIAS
+    if using in _readonly_configured_database_aliases:
+        return
+
+    status = sync_pg_audit_readonly_triggers(using=using)
+    if status is not None:
+        _readonly_configured_database_aliases.add(using)
