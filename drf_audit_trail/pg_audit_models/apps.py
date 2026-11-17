@@ -25,16 +25,22 @@ class PgAuditModelsConfig(AppConfig):
 
         if not self.model_table_mapping:
             for model in apps.get_models():
-                self.model_verbose_name_mapping[model._meta.db_table] = str(
-                    model._meta.verbose_name
-                )
-                self.model_table_mapping[model._meta.db_table] = model
-                for field in model._meta.get_fields():
-                    if hasattr(field, "column"):
-                        key = f"{field.model._meta.db_table}.{field.column}"
-                        if isinstance(field, ForeignKey):
-                            self.related_model_table_mapping[key] = field.related_model
-                        self.field_verbose_name_mapping[key] = str(field.verbose_name)
+                self.map_model(model)
+
+    def map_model(self, model):
+        self.model_verbose_name_mapping[model._meta.db_table] = str(
+            model._meta.verbose_name
+        )
+        self.model_table_mapping[model._meta.db_table] = model
+        for field in model._meta.get_fields():
+            # Fields without a database column, such as GenericForeignKey, are
+            # skipped. Before Django 5.1 they also have no verbose_name.
+            if not getattr(field, "column", None):
+                continue
+            key = f"{field.model._meta.db_table}.{field.column}"
+            if isinstance(field, ForeignKey):
+                self.related_model_table_mapping[key] = field.related_model
+            self.field_verbose_name_mapping[key] = str(field.verbose_name)
 
     def get_object_by_db_table(self, db_table, pk):
         if db_table and pk:

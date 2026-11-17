@@ -46,6 +46,7 @@ from . import (
     system_audit,
 )
 from .admin import ActionLogAdmin
+from .apps import PgAuditModelsConfig
 from .config import (
     get_api_views_module_paths,
     get_audited_model_tables,
@@ -305,6 +306,44 @@ class PGAuditModelsVerboseNameTests(SimpleTestCase):
 
         self.assertEqual(action_log_admin.get_ref_name(self.action_log), "category")
         self.assertEqual(action_log_admin.get_ref_name.short_description, "model")
+
+
+class PGAuditModelsAppConfigTests(SimpleTestCase):
+    def setUp(self):
+        self.app_config = PgAuditModelsConfig(
+            "drf_audit_trail.pg_audit_models",
+            importlib.import_module("drf_audit_trail.pg_audit_models"),
+        )
+
+    def test_map_model_should_map_real_model_fields(self):
+        self.app_config.map_model(Category)
+
+        self.assertEqual(
+            self.app_config.field_verbose_name_mapping[
+                f"{Category._meta.db_table}.name"
+            ],
+            "name",
+        )
+
+    def test_map_model_should_skip_fields_without_database_column(self):
+        fields = []
+        model = SimpleNamespace(
+            _meta=SimpleNamespace(
+                db_table="tests_generic_model",
+                verbose_name="generic model",
+                get_fields=lambda: fields,
+            )
+        )
+        generic_foreign_key = SimpleNamespace(name="content_object", column=None)
+        name_field = SimpleNamespace(column="name", verbose_name="name", model=model)
+        fields.extend([generic_foreign_key, name_field])
+
+        self.app_config.map_model(model)
+
+        self.assertEqual(
+            self.app_config.field_verbose_name_mapping,
+            {"tests_generic_model.name": "name"},
+        )
 
 
 class PGAuditModelsConfigTests(SimpleTestCase):
