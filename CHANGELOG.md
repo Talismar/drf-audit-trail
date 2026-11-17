@@ -1,16 +1,27 @@
 # Changelog
 
-## 0.5.8
+## 0.6.2
 
 ### Fixed
-- Removed `ProcessAuditEvent`, `RegistrationAuditEvent` and `StepAuditEvent` from the 0.5.7 read-only DB triggers. Only `LoginAuditEvent` and `RequestAuditEvent` (plus `pg_audit_models.ActionLog`/`DiffLog`) are the actual audit log and need DB-enforced immutability; the process/step/registration tables are process bookkeeping. Keeping the trigger on `ProcessAuditEvent` in particular blocked the internal `UPDATE` that `RequestAuditEventManager.create_by_request` performs to link a process to its request (via `RequestAuditEvent.processes.add(...)`). That `UPDATE` was always issued through Django's bulk related-manager path, bypassing the `ProtectedModelMixin` Python guard, and was being silently swallowed by a bare `except BaseException: pass` — except that in PostgreSQL a failed statement aborts the whole transaction, so every subsequent query in that request/test transaction failed with `TransactionManagementError`.
-- Wrapped the process-linking call in `RequestAuditEventManager.create_by_request` in its own savepoint (`transaction.atomic()`) so a failure there can never poison the caller's outer transaction again.
+- Ignored model fields without a database column (such as `GenericForeignKey` and `GenericRelation`) during model and field mapping in `pg_audit_models`. This fixes an `AttributeError: 'GenericForeignKey' object has no attribute 'verbose_name'` upon application startup in Django < 5.1 and avoids generating invalid `<db_table>.None` column mapping keys in Django >= 5.1.
+- Refactored `PgAuditModelsConfig.ready()` to extract `map_model(model)` method, simplifying model registration and improving unit testability.
+
+## 0.6.1
+
+### Changed
+- Updated audit log report templates from `auditlogentry` to `audit_log_report` to match the PostgreSQL trigger-based audit structure.
 
 ## 0.6.0
 
 ### Removed
 - **Breaking:** Removed the `AuditLogEntry` model and its migration (`0006_delete_auditlogentry`). The `@audit_log` decorator, `record_system_event`, and the `drf_audit_trail.manager_audit` package (`AuditedModel`, `AuditedManager`, `AuditedQuerySet`, `audit_model_context`, `disable_manager_audit`, `set_audit_reason`) are removed along with it, since they existed only to populate that model. `DRF_AUDIT_TRAIL_MANAGER_AUDIT` and `DRF_AUDIT_TRAIL_USER_ROLE_GETTER` settings no longer have any effect.
 - Object/field-level audit tracking is now handled exclusively by `drf_audit_trail.pg_audit_models` (PostgreSQL trigger-based `ActionLog`/`DiffLog`). Projects that relied on `AuditLogEntry` should migrate to that app.
+
+## 0.5.8
+
+### Fixed
+- Removed `ProcessAuditEvent`, `RegistrationAuditEvent` and `StepAuditEvent` from the 0.5.7 read-only DB triggers. Only `LoginAuditEvent` and `RequestAuditEvent` (plus `pg_audit_models.ActionLog`/`DiffLog`) are the actual audit log and need DB-enforced immutability; the process/step/registration tables are process bookkeeping. Keeping the trigger on `ProcessAuditEvent` in particular blocked the internal `UPDATE` that `RequestAuditEventManager.create_by_request` performs to link a process to its request (via `RequestAuditEvent.processes.add(...)`). That `UPDATE` was always issued through Django's bulk related-manager path, bypassing the `ProtectedModelMixin` Python guard, and was being silently swallowed by a bare `except BaseException: pass` — except that in PostgreSQL a failed statement aborts the whole transaction, so every subsequent query in that request/test transaction failed with `TransactionManagementError`.
+- Wrapped the process-linking call in `RequestAuditEventManager.create_by_request` in its own savepoint (`transaction.atomic()`) so a failure there can never poison the caller's outer transaction again.
 
 ## 0.3.9 - 2025-10-01
 
